@@ -1,6 +1,7 @@
 // Everything the Gate page knows about the live API: base URL, request building and the answer shapes.
 // Shapes follow reinkeep/api/README.md and api/src/gate-service.ts.
-export const GATE: string = import.meta.env.VITE_GATE_URL || 'https://reinkeep-gate.reinkeep.workers.dev'
+// The one place the site's API address lives. The old https://reinkeep-gate.reinkeep.workers.dev keeps working too.
+export const GATE: string = import.meta.env.VITE_GATE_URL || 'https://api.reinkeep.xyz'
 
 export const NETWORK = 'eip155:4663'
 export const USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'

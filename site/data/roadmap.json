@@ -22,7 +22,7 @@
   {
     "state": "live",
     "title": "Hosted gate with a free daily allowance",
-    "text": "reinkeep-gate.reinkeep.workers.dev: 25 free checks a day per caller, with per-payer history for caps, duplicates and rate limits."
+    "text": "api.reinkeep.xyz: 25 free checks a day per caller, with per-payer history for caps, duplicates and rate limits."
   },
   {
     "state": "live",

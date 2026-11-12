@@ -14,7 +14,7 @@ const WAYS = [
 ] as const
 
 // The hosted gate: real addresses an agent or a developer can use today (api/README.md, api/src/discovery.ts).
-const GATE = 'https://reinkeep-gate.reinkeep.workers.dev'
+import { GATE } from '@/features/gate-tool/gate-api'
 const ENDPOINTS = [
   { label: 'REST API', url: `${GATE}/api/v1/gate`, note: 'POST a payment request, get ALLOW, REVIEW or BLOCK and a signed receipt.' },
   { label: 'MCP server', url: `${GATE}/mcp`, note: 'Add it as a remote MCP server in Claude, Cursor or any MCP client.' },

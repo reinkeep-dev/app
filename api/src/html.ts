@@ -3,7 +3,7 @@
 export const esc = (v: unknown): string =>
   String(v).replace(/[&<>"'`]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "`": "&#96;" })[c]!);
 
-export const SITE_URL = "https://reinkeep-site.reinkeep.workers.dev";
+export const SITE_URL = "https://reinkeep.xyz";
 
 // Light page in the site's colours (#F7F6F3 paper, #1A1A1A ink). Readable at 375px, no external font or file.
 const CSS = `

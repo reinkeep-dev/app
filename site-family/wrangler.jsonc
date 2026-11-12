@@ -1,11 +1,15 @@
 // Cloudflare deploy config for the Reinkeep website (static files only, no Worker code).
 // Build first (npm run build -> dist/), then from this folder: npx wrangler deploy
 // Deep links (/gate, /docs ...) fall back to index.html; the React router draws the page, or its own 404.
-// Address: https://reinkeep-site.reinkeep.workers.dev (the user chose to add a domain later).
+// Address: https://reinkeep.xyz and https://www.reinkeep.xyz; https://reinkeep-site.reinkeep.workers.dev stays on too.
 {
   "name": "reinkeep-site",
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
+  "routes": [
+    { "pattern": "reinkeep.xyz", "custom_domain": true },
+    { "pattern": "www.reinkeep.xyz", "custom_domain": true }
+  ],
   "preview_urls": false,
   "assets": {
     "directory": "./dist",

@@ -9,7 +9,7 @@ import { MIN_SAMPLE } from "./premortem.ts";
 import { BOARD_MAX_DAYS, RADAR_MAX_HOURS } from "./launch-data.ts";
 import { DATA_CALLS_PER_DAY, DEFAULT_FACILITATOR, FREE_CALLS_PER_DAY, NETWORK, PREMORTEM_CALLS_PER_DAY, PRICE_AMOUNT, PRICE_USD, USDG, VERDICT_CALLS_PER_DAY, X402_VERSION, requirementsFor } from "./x402.ts";
 
-export const BASE_URL = "https://reinkeep-gate.reinkeep.workers.dev";
+export const BASE_URL = "https://api.reinkeep.xyz"; // the old https://reinkeep-gate.reinkeep.workers.dev still answers
 export const MCP_URL = BASE_URL + "/mcp";
 export const API = "/api/v1";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;

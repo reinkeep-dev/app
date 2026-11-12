@@ -12,9 +12,10 @@
   "main": "./src/worker.ts",
   "compatibility_date": "2026-11-01",
 
-  // A public address on the account's workers.dev name: https://reinkeep-gate.reinkeep.workers.dev
-  // (the domain comes later; the user chose to do the website and domain last).
+  // Public at https://api.reinkeep.xyz (zone reinkeep.xyz on this account). The old workers.dev address stays on,
+  // so agents already set up with https://reinkeep-gate.reinkeep.workers.dev keep working.
   "workers_dev": true,
+  "routes": [{ "pattern": "api.reinkeep.xyz", "custom_domain": true }],
   "preview_urls": false,
   "observability": { "enabled": true },
 

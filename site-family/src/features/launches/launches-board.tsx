@@ -12,7 +12,7 @@ const ERRORS: Record<DataFailure, string> = {
   not_found: 'Our collector never saw a pool for this token, so there is nothing to look back on.',
   bad_address: 'That does not look like a token address. It starts with 0x and has 40 more characters.',
   no_data: 'Launch data is not available right now.',
-  failed: 'Could not reach the gate. Try again in a moment; if it keeps failing, your network may block workers.dev, so try another connection.',
+  failed: 'Could not reach the gate. Try again in a moment; if it keeps failing, try another connection.',
 }
 
 type Load<T> = { phase: 'loading' } | { phase: 'error'; kind: DataFailure } | { phase: 'done'; data: T }

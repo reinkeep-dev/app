@@ -113,7 +113,7 @@ test("llms.txt names every endpoint, the price, the MCP url and the limits", asy
   for (const { path } of readmePaths) assert.ok(txt.includes(path), path);
   assert.ok(txt.includes(`$${PRICE_USD.toFixed(2)}`));
   assert.ok(txt.includes(PRICE_AMOUNT) && txt.includes(USDG) && txt.includes(String(FREE_CALLS_PER_DAY)));
-  assert.ok(txt.includes("https://reinkeep-gate.reinkeep.workers.dev/mcp"));
+  assert.ok(txt.includes("https://api.reinkeep.xyz/mcp"));
   assert.match(txt, /no outside audit yet/);
   assert.match(txt, /Unknown never passes/);
   assert.match(txt, /token_mint_live_owner/);
