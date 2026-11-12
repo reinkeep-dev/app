@@ -34,9 +34,9 @@ const db = createD1Rest({
 });
 const store = new D1CollectorStore(db);
 
-// No 50-request cap here (that is Cloudflare's). GitHub starts scheduled runs late: Actuary's hourly job ran 4 to 11
-// hours apart on 8-11 Nov. The chain makes ~35,000 blocks an hour, so one run must be able to read ~13 hours of
-// launches (15 scans of 30,000 blocks, the public node's getLogs limit per Actuary's tickers.py). GeckoTerminal calls
+// No 50-request cap here (that is Cloudflare's). GitHub starts scheduled runs late: hourly jobs
+// have been seen to run 4 to 11 hours apart. The chain makes ~35,000 blocks an hour, so one run must be able to read ~13 hours of
+// launches (15 scans of 30,000 blocks, the public node's getLogs limit). GeckoTerminal calls
 // stay paced at 2.2 s by the client; at most 2 + 10 + 6 = 18 of them, about 40 s.
 const budget = createBudget(400, (input, init) => fetch(input, init));
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -54,7 +54,8 @@ const stats = await runCollect({
   budgetLeft: budget.left,
   pages: 2,
   maxFacts: 100,
-  resolveBatches: 6,
+  // RESOLVE_BATCHES: a one-off manual run can clear a re-check backlog (30 pools per batch, ~2.2 s each).
+  resolveBatches: Math.min(Math.max(Number(process.env.RESOLVE_BATCHES) || 6, 1), 40),
   chain: { maxSpanBlocks: 30_000, maxLaunches: 200, maxScans: 15, launchBatches: 10 },
 });
 const summary = { requestsUsed: budget.used(), ...stats };
