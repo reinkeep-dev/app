@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { aiExplainer, checkExplanation, EXPLAIN_MODEL, type AiRunner } from "../api/src/explain.ts";
+import { aiExplainer, checkExplanation, EXPLAIN_MODEL, EXPLAIN_TIMEOUT_MS, type AiRunner } from "../api/src/explain.ts";
 import { createHandler } from "../api/src/http-handler.ts";
 import { MemoryGateStore } from "../api/src/gate-store.ts";
 import type { GateDeps } from "../api/src/gate-service.ts";
@@ -72,10 +72,13 @@ test("a slow model falls back at the timeout, and the call still answers", async
   assert.equal(r.data.explanation.source, "rules");
 });
 
-test("default timeout is under 2.6 seconds", async () => {
+test("default timeout: a model that never answers is dropped after EXPLAIN_TIMEOUT_MS", async () => {
+  // The limit itself is checked exactly; the wall clock only loosely, since a busy machine adds scheduling delay
+  // (a 100 ms margin here used to fail now and then).
+  assert.ok(EXPLAIN_TIMEOUT_MS <= 2500);
   const t = Date.now();
   const r = await app({ explain: aiExplainer(fake(() => new Promise(() => {}))) })(allow);
-  assert.ok(Date.now() - t < 2600);
+  assert.ok(Date.now() - t < EXPLAIN_TIMEOUT_MS + 1500);
   assert.equal(r.data.explanation.source, "rules");
 });
 
