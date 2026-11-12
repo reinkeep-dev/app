@@ -6,7 +6,7 @@
 // "Alive" is the collector's own isAlive() (collect-run.ts), so there is one definition. Every answer carries
 // `coverage`: the collector sees only some launches, and a share is shown only from MIN_SAMPLE judged pools.
 import type { BoardDay, CollectorStore, LiquidityBand, TickerWave } from "../../collector/src/collector-store.ts";
-import { isAlive } from "../../collector/src/collect-run.ts";
+import { isAlive, isPulled } from "../../collector/src/collect-run.ts";
 import type { PoolRecord, Snapshot } from "../../collector/src/types.ts";
 import { ApiError } from "./api-error.ts";
 import { LIQUIDITY_BANDS, MIN_SAMPLE } from "./premortem.ts";
@@ -16,7 +16,6 @@ export type LaunchStore = Pick<CollectorStore, "outcomesByBand" | "boardDays" | 
 export const SWAP_BANDS = [0, 3, 20, 100, 500];
 export const BOARD_MAX_DAYS = 30;
 export const RADAR_MAX_HOURS = 168;
-const PULLED_SHARE = 0.1; // a day later under 10% of the first-seen liquidity counts as pulled
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 
@@ -39,7 +38,7 @@ export async function odds(store: LaunchStore) {
     byFirstLiquidityUsd: liquidity.map(withShare),
     byFirstSwaps: swaps.map(withShare),
     minSample: MIN_SAMPLE,
-    definition: "Still trading = at least $50 of volume or 3 swaps in the 24 hours before the re-check. A record of past tokens, not a prediction.",
+    definition: "Still trading = at least $50 of volume or 3 swaps in the 24 hours before the re-check, and the pool kept at least a tenth of its first-seen liquidity. A record of past tokens, not a prediction.",
     coverage: cov,
   };
 }
@@ -85,9 +84,12 @@ export function classify(p: PoolRecord, nowMs: number): Pattern {
   const o = p.outcome;
   if (!o) return nowMs - p.createdMs < DAY_MS ? "too_young" : "not_rechecked";
   if (o.alive === null) return "unknown";
-  if (o.alive) return "still_trading";
+  // A pulled pool is never "still trading": its day-later volume can be the trading from before the pull. Rows stored
+  // before 2026-11-12 can say alive for such a pool, so it is checked here too, not only in the collector.
+  const pulled = isPulled(p.first.liquidityUsd, o.liquidityUsd);
+  if (o.alive && !pulled) return "still_trading";
   if (isAlive(p.first) === false) return "never_lived";
-  if (p.first.liquidityUsd !== null && p.first.liquidityUsd > 0 && o.liquidityUsd !== null && o.liquidityUsd < p.first.liquidityUsd * PULLED_SHARE) return "liquidity_pulled";
+  if (pulled) return "liquidity_pulled";
   return "faded";
 }
 

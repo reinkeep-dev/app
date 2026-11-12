@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isAlive, runCollect } from "../collector/src/collect-run.ts";
+import { isAlive, isPulled, outcomeAlive, runCollect } from "../collector/src/collect-run.ts";
 import { D1CollectorStore } from "../collector/src/d1-store.ts";
 import { createRpcClient } from "../collector/src/contract-facts.ts";
 import { createGeckoClient } from "../collector/src/geckoterminal.ts";
@@ -248,4 +248,14 @@ test("alive after a day: enough trading, or too little, or nothing to judge by",
   assert.equal(isAlive({ volumeH24Usd: null, buysH24: 3, sellsH24: null }), true);
   assert.equal(isAlive({ volumeH24Usd: 0, buysH24: 0, sellsH24: 0 }), false, "zeros are real data: dead");
   assert.equal(isAlive({ volumeH24Usd: null, buysH24: null, sellsH24: null }), null, "no numbers at all is unknown, not dead");
+});
+
+test("a pulled pool is never stored alive, however busy its last 24 hours look", () => {
+  // Real case 2026-11-12 ("duh"): $70.5k at first sight, $1.65 a day later, 2,336 swaps in the 24 h before the re-check.
+  const busyAfterPull = { liquidityUsd: 1.65, volumeH24Usd: 563_444, buysH24: 1500, sellsH24: 836 };
+  assert.equal(outcomeAlive({ liquidityUsd: 70_543 }, busyAfterPull), false);
+  assert.equal(outcomeAlive({ liquidityUsd: 10_000 }, { ...busyAfterPull, liquidityUsd: 1_000 }), true, "exactly 10% is not pulled");
+  assert.equal(outcomeAlive({ liquidityUsd: null }, busyAfterPull), true, "no first liquidity: trading decides");
+  assert.equal(outcomeAlive({ liquidityUsd: 10_000 }, { ...busyAfterPull, liquidityUsd: null }), true, "no later liquidity: trading decides");
+  assert.equal(isPulled(0, 0), false);
 });

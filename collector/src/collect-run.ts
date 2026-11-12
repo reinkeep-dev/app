@@ -57,6 +57,16 @@ const GIVE_UP_AFTER_MS = 72 * HOUR_MS; // a pool the source still will not retur
 const CURSOR = "launches";
 const CHAIN_DEFAULTS = { lookbackBlocks: 3_000, maxSpanBlocks: 20_000, maxLaunches: 30, maxScans: 1 };
 
+// A day later under 10% of the first-seen liquidity counts as pulled. A pulled pool is never "alive", however busy its
+// 24 h volume looks: that volume can be the trading from before the pull (seen 2026-11-12: $70k -> $1.65, 2,336 swaps).
+export const PULLED_SHARE = 0.1;
+export const isPulled = (firstLiquidityUsd: number | null, laterLiquidityUsd: number | null): boolean =>
+  firstLiquidityUsd !== null && firstLiquidityUsd > 0 && laterLiquidityUsd !== null && laterLiquidityUsd < firstLiquidityUsd * PULLED_SHARE;
+
+// The re-check's verdict, stored as `alive`: pulled first, then trading.
+export const outcomeAlive = (first: Pick<Snapshot, "liquidityUsd">, later: Pick<Snapshot, "liquidityUsd" | "volumeH24Usd" | "buysH24" | "sellsH24">): boolean | null =>
+  isPulled(first.liquidityUsd, later.liquidityUsd) ? false : isAlive(later);
+
 export function isAlive(s: Pick<Snapshot, "volumeH24Usd" | "buysH24" | "sellsH24">): boolean | null {
   if (s.volumeH24Usd === null && s.buysH24 === null && s.sellsH24 === null) return null; // nothing to judge by
   const swaps = (s.buysH24 ?? 0) + (s.sellsH24 ?? 0);
@@ -195,7 +205,7 @@ export async function runCollect(d: CollectDeps): Promise<RunStats> {
       for (const pool of batch) {
         const row = returned.get(pool.pool);
         if (!row) { stats.outcomesMissing++; continue; }
-        const outcome: Outcome = { atMs: nowMs, ...row.stats, ageH: Math.round(((nowMs - pool.createdMs) / HOUR_MS) * 10) / 10, alive: isAlive(row.stats) };
+        const outcome: Outcome = { atMs: nowMs, ...row.stats, ageH: Math.round(((nowMs - pool.createdMs) / HOUR_MS) * 10) / 10, alive: outcomeAlive(pool.first, row.stats) };
         await d.store.setOutcome(pool.pool, outcome);
         stats.outcomesStored++;
       }
