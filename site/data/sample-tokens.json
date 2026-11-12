@@ -1,0 +1,90 @@
+{
+  "note": "Real fact sheets read from Robinhood Chain by the Reinkeep collector.",
+  "readAtMs": 1794405371842,
+  "tokens": [
+    {
+      "token": "0x2b340969a668cccbd02a174dc316959a0c9df157",
+      "ticker": "AIPF",
+      "facts": {
+        "token": "0x2b340969a668cccbd02a174dc316959a0c9df157",
+        "ticker": "AIPF",
+        "facts_read_at_ms": 1794405371842,
+        "is_contract": true,
+        "is_proxy": false,
+        "has_mint": false,
+        "has_pause": false,
+        "has_blacklist": false,
+        "has_upgrade": false,
+        "has_owner_function": false,
+        "owner_renounced": null,
+        "mint_with_live_owner": false,
+        "total_supply": "1000000000000000000000000000",
+        "decimals": 18,
+        "pool_count": 1,
+        "seen_age_minutes": 2,
+        "seen_liquidity_usd": 308920.400527458,
+        "seen_volume_usd": 0.00409967178,
+        "seen_swaps": 1,
+        "liquidity_not_reported": false,
+        "ticker_uses": 1,
+        "ticker_clone_of_older": false
+      }
+    },
+    {
+      "token": "0x42f7d0ad548673f1703f4f240bfc806d1ad12c9c",
+      "ticker": "PONSTERS",
+      "facts": {
+        "token": "0x42f7d0ad548673f1703f4f240bfc806d1ad12c9c",
+        "ticker": "PONSTERS",
+        "facts_read_at_ms": 1794365174363,
+        "is_contract": true,
+        "is_proxy": true,
+        "has_mint": false,
+        "has_pause": false,
+        "has_blacklist": false,
+        "has_upgrade": false,
+        "has_owner_function": true,
+        "owner_renounced": false,
+        "mint_with_live_owner": false,
+        "total_supply": "1000000000000000000000000000",
+        "decimals": 18,
+        "pool_count": 1,
+        "seen_age_minutes": 3,
+        "seen_liquidity_usd": 60460300761559.6,
+        "seen_volume_usd": 0.9455177598,
+        "seen_swaps": 1,
+        "liquidity_not_reported": false,
+        "ticker_uses": 1,
+        "ticker_clone_of_older": false
+      }
+    },
+    {
+      "token": "0x60709f8f5d5bc30686e55dbacc5c80b74573c6ea",
+      "ticker": "BRIAN",
+      "facts": {
+        "token": "0x60709f8f5d5bc30686e55dbacc5c80b74573c6ea",
+        "ticker": "BRIAN",
+        "facts_read_at_ms": 1794299459066,
+        "is_contract": true,
+        "is_proxy": false,
+        "has_mint": false,
+        "has_pause": false,
+        "has_blacklist": false,
+        "has_upgrade": false,
+        "has_owner_function": true,
+        "owner_renounced": false,
+        "mint_with_live_owner": false,
+        "total_supply": "1000000000000000000",
+        "decimals": 9,
+        "pool_count": 1,
+        "seen_age_minutes": 7,
+        "seen_liquidity_usd": 604.4357,
+        "seen_volume_usd": 2.0697751821,
+        "seen_swaps": 2,
+        "liquidity_not_reported": false,
+        "ticker_uses": 1,
+        "ticker_clone_of_older": false
+      }
+    }
+  ]
+}

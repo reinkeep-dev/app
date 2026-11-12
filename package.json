@@ -1,0 +1,21 @@
+{
+  "name": "reinkeep",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Pre-trade gate for AI agents on Robinhood Chain: token facts plus spending rules, one answer, a receipt you can re-check.",
+  "scripts": {
+    "build:engine": "node scripts/build-engine.mjs",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "api:dev": "node api/dev-server.ts",
+    "collect:local": "node collector/run-local.ts"
+  },
+  "dependencies": {
+    "viem": "^2.57.17"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}

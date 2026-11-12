@@ -1,0 +1,53 @@
+// Cloudflare deploy config for the Reinkeep gate API. Run wrangler commands from this folder (reinkeep/api).
+// Secrets, set by the owner (never in this file):
+//   npx wrangler secret put REINKEEP_SIGNER_KEY   0x + 64 hex: signs receipts. Losing it = receipts cannot be trusted.
+//   npx wrangler secret put RPC_URL               the Chainstack Robinhood endpoint, for live contract reads.
+//   npx wrangler secret put PRIORS_API_KEY        the Priors facilitator merchant key: verifies and settles x402 payments.
+// Plain vars, under "vars" below:
+//   X402_PAY_TO        the owner's wallet address (0x...) that receives the $0.01 per paid gate call.
+//   FACILITATOR_URL    optional, default https://facilitator.priors.trade
+// Without X402_PAY_TO or PRIORS_API_KEY the free tier still works; past it the gate answers 503 payment_not_configured.
+{
+  "name": "reinkeep-gate",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-11-01",
+
+  // A public address on the account's workers.dev name: https://reinkeep-gate.reinkeep.workers.dev
+  // (the domain comes later; the user chose to do the website and domain last).
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+
+  // Wallet that receives paid gate calls; must be the wallet registered as the Priors merchant (public address).
+  "vars": { "X402_PAY_TO": "0x759Cf0e19d45c1dCA28977703b69Fd93a3f6a136" },
+
+  // Read the token facts the collector has stored (same database as collector/wrangler.jsonc).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reinkeep-collector",
+      "database_id": "7e8716f6-9aa3-4d51-a02b-b34e57831738"
+    }
+  ],
+
+  // Workers AI (free allowance): writes the short plain-English note on each gate answer (src/explain.ts). Optional;
+  // without this binding the note is built from the rules. The AI never decides anything.
+  "ai": { "binding": "AI" },
+
+  // Payer history: one Durable Object per payer address (class PayerLedger in src/worker.ts). SQLite-backed, which
+  // the free plan requires. The migration tag only ever grows; never edit or remove a tag that has been deployed.
+  "durable_objects": {
+    "bindings": [
+      { "name": "PAYER", "class_name": "PayerLedger" },
+      // Free tier: one FreeTier object per caller IP counts that IP's gate calls for the UTC day.
+      { "name": "FREE", "class_name": "FreeTier" },
+      // Mandates: one MandateWatch object per mandate id; it re-checks its token every 30 minutes for 7 days by alarm.
+      { "name": "MANDATES", "class_name": "MandateWatch" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PayerLedger"] },
+    { "tag": "v2", "new_sqlite_classes": ["FreeTier"] },
+    { "tag": "v3", "new_sqlite_classes": ["MandateWatch"] }
+  ]
+}

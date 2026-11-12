@@ -1,0 +1,17 @@
+{
+  "note": "A REAL launch event from the launcher contract on Robinhood Chain, fetched with eth_getLogs on 2026-11-11. Block timestamp 1794374960 (eth_getBlockByNumber). topic1 = token, topic2 = pool (pons-v2; equals GeckoTerminal's pool id for 200 of 200 launcher tokens checked), topic3 = creator.",
+  "blockTimestamp": 1794374960,
+  "log": {
+    "address": "0xe33e9e479df8802cb0866d5d05258bec4cf62948",
+    "blockNumber": "0x6a4d3fc",
+    "transactionHash": "0xf2f858915f70d404aa1c9965c8fb71097bf7a5e98a46d0cdfbcfbaf5d6b19bc3",
+    "logIndex": "0x20",
+    "topics": [
+      "0xdcacba5e347ae7abd91cb519eb877af8fa7774e347b85dd3ddcd24a2ba8cdf37",
+      "0x000000000000000000000000f96e8cc7ffe50da27eb02e1607fa59b64e7109db",
+      "0x000000000000000000000000e8b5d1c723cd515a622bd192a9f10292f901f338",
+      "0x000000000000000000000000df883de886d1fdae3d5f9a81a2d92c8242f79c14"
+    ],
+    "data": "0x000000000000000000000000df883de886d1fdae3d5f9a81a2d92c8242f79c14000000000000000000000000000000000000000000000000002386f26fc1000000000000000000000000000000000000000000000004bfa205309e4d775ecc23"
+  }
+}

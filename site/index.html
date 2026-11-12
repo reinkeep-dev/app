@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reinkeep: the spend gate for AI agents</title>
+  <meta name="description" content="Before your agent pays, Reinkeep checks your spending rules and answers ALLOW, REVIEW or BLOCK with a receipt you can re-check. Early access, not audited.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0A0907">
+  <meta property="og:title" content="Reinkeep: hold the reins on your AI agent">
+  <meta property="og:description" content="One question, one answer: ALLOW, REVIEW or BLOCK, with a receipt you can re-check. Early access.">
+  <link rel="icon" href="brand/logo.webp" type="image/webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+  <link rel="preload" as="image" href="assets/turn/30.webp?v=1b6065fe">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="hero.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="top">
+    <a class="nav__brand" href="#top" aria-label="Reinkeep home">
+      <img src="brand/logo.webp" width="32" height="32" alt="">
+      <span>Reinkeep</span>
+    </a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#gate">Gate</a>
+      <a href="#rules">Rules</a>
+      <a href="#build">Build</a>
+      <a href="#status">Status</a>
+    </nav>
+    <a class="btn btn--brass btn--sm" href="#gate">Try the Gate</a>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="hero" aria-labelledby="hero-title">
+      <!-- All hero art is rendered with Remotion (see ../studio). The page only picks frames and loops video. -->
+      <video class="hero__field" id="hero-field" src="assets/hero-field.mp4?v=f9dace81" poster="assets/hero-field.webp?v=86fd054a" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>
+      <div class="hero__veil" aria-hidden="true"></div>
+
+      <div class="hero__inner">
+        <div class="hero__mark" id="hero-mark" aria-hidden="true">
+          <canvas id="turn" width="800" height="800" data-v="1b6065fe"></canvas>
+        </div>
+
+        <div class="hero__cols">
+          <div class="hero__l">
+            <h1 id="hero-title">Hold the reins<br><span>on your AI agent.</span></h1>
+            <p>The spend gate: your rules are checked before the agent pays, and every answer comes with a receipt.</p>
+            <div class="hero__cta">
+              <a class="btn btn--brass" href="#gate">Try the Gate &rarr;</a>
+              <a class="btn btn--ghost" href="#rules">The 16 rules</a>
+            </div>
+          </div>
+          <!-- The three answers as large type; one lights up at a time. -->
+          <div class="answers">
+            <ul class="answers__words" id="answers" aria-label="The gate gives one of three answers">
+              <li data-v="allow">ALLOW</li>
+              <li data-v="review">REVIEW</li>
+              <li data-v="block">BLOCK</li>
+            </ul>
+            <p class="answers__note">One answer before every payment, with the rule that decided it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--gateway" aria-labelledby="gw-title">
+      <div class="container">
+        <p class="eyebrow reveal">01 &middot; The gate</p>
+        <h2 class="title reveal" id="gw-title">The Gate Before <span class="mute">Every Payment</span></h2>
+        <div class="cards">
+          <article class="card card--feature reveal">
+            <h3>The spend gate</h3>
+            <p>Your rules are checked before the agent pays. Nothing reaches the signer unless the answer is ALLOW.</p>
+            <img class="card__art card__art--big" src="assets/card-gate.webp?v=df5190b3" width="720" height="720" alt="" loading="lazy">
+          </article>
+          <article class="card reveal">
+            <h3>16 spend rules</h3>
+            <p>Caps, recipients, price changes, replays and wrong chains.</p>
+            <img class="card__art" src="assets/card-rules.webp?v=92c986bc" width="720" height="720" alt="" loading="lazy">
+          </article>
+          <article class="card reveal">
+            <h3>Receipts</h3>
+            <p>A hash of the request and the answer. Re-check it yourself.</p>
+            <img class="card__art" src="assets/card-receipt.webp?v=9d3b9c3c" width="720" height="720" alt="" loading="lazy">
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--market" id="gate" aria-labelledby="gate-title">
+      <div class="container">
+        <div class="market reveal">
+          <p class="eyebrow">02 &middot; Live demo</p>
+          <h2 class="title title--m" id="gate-title">Try the Gate</h2>
+          <p class="lead">Change the trade, watch the answer. It runs the real rules engine in your browser. Nothing is sent anywhere.</p>
+        </div>
+
+        <div class="gate__grid reveal">
+          <!-- Left: the payment request as a ledger slip. Right: the answer, the rules that fired, and the receipt. -->
+          <form class="slip" id="gate-form" autocomplete="off">
+            <p class="slip__head"><span>Payment request</span><span>change any line</span></p>
+            <label class="row"><span class="row__k">Your limit</span>
+              <input id="in-limit" type="range" min="0.01" max="1" step="0.01" value="0.10"><output id="out-limit">$0.10</output></label>
+            <label class="row"><span class="row__k">Amount</span>
+              <input id="in-amount" type="range" min="0.01" max="2" step="0.01" value="0.04"><output id="out-amount">$0.04</output></label>
+            <label class="row"><span class="row__k">Pay to</span>
+              <select id="in-payee">
+                <option value="known">A vendor on your list</option>
+                <option value="new">A vendor you have never paid</option>
+                <option value="stranger">0x…dEaD, asked for by a web page</option>
+              </select></label>
+            <label class="row"><span class="row__k">Chain</span>
+              <select id="in-chain">
+                <option value="ok">Robinhood Chain, USDG</option>
+                <option value="wrong">Ethereum, USDC</option>
+              </select></label>
+            <label class="row row--check"><input id="in-moved" type="checkbox"><span>Price moved after the quote (+8%)</span></label>
+            <label class="row row--check"><input id="in-http" type="checkbox"><span>Payment link is plain http</span></label>
+          </form>
+
+          <div class="answer" id="result" aria-live="polite">
+            <div class="verdict" id="verdict" data-v="allow">
+              <p class="verdict__k">The gate answers</p>
+              <p class="verdict__word" id="verdict-word">ALLOW</p>
+              <p class="verdict__why" id="verdict-why"></p>
+            </div>
+            <ul class="reasons" id="reasons"></ul>
+            <div class="tape">
+              <p class="tape__row"><span>Receipt</span><code id="receipt">rk_</code></p>
+              <p class="tape__note">First 8 hex of sha256 of the request and the answer. Re-check it yourself. Signed receipts are planned.</p>
+              <details class="json"><summary>Request JSON</summary><pre><code id="json-out"></code></pre></details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="line reveal" aria-label="Built around">
+      <p>Built around</p>
+      <ul><li>x402</li><li>MCP</li><li>USDG</li><li>Robinhood Chain</li></ul>
+    </section>
+
+    <section class="sec sec--doors" id="doors" aria-labelledby="doors-title">
+      <div class="container">
+        <p class="eyebrow reveal">03 &middot; Two questions</p>
+        <h2 class="title reveal" id="doors-title">What It Buys. <span class="mute">How It Pays.</span></h2>
+        <!-- Two doors side by side, each with its own render on top of its text. -->
+        <div class="doors">
+          <article class="door reveal">
+            <div class="door__art" aria-hidden="true"><img src="assets/door-pays.webp?v=445204b9" width="720" height="720" alt="" loading="lazy"></div>
+            <div class="door__txt">
+              <p class="tag tag--live">Live</p>
+              <h3>How it pays</h3>
+              <p>Caps per payment, per website and per day. A first-time recipient waits for a human. A price that changed after the quote is refused. Replays, bursts and wrong chains never reach the signer.</p>
+            </div>
+          </article>
+          <article class="door reveal">
+            <div class="door__art" aria-hidden="true"><img src="assets/door-buys.webp?v=5efe3390" width="720" height="720" alt="" loading="lazy"></div>
+            <div class="door__txt">
+              <p class="tag tag--build">Building</p>
+              <h3>What it buys</h3>
+              <p>Token facts read from the chain: can it still be minted, who holds the keys, is it a proxy, can it be paused or blacklisted. Facts only, never a score. Missing data means REVIEW, never ALLOW.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="rules" aria-labelledby="rules-title">
+      <div class="container">
+        <p class="eyebrow reveal">04 &middot; The rules</p>
+        <h2 class="title reveal" id="rules-title">Sixteen Reasons <span class="mute">to Block, or to Ask</span></h2>
+        <p class="lead lead--c reveal">No score, no mood, no persuasion. The same request gets the same answer, and the answer says why.</p>
+        <ul class="rules reveal" id="rule-list"></ul>
+      </div>
+    </section>
+
+    <section class="sec" id="build" aria-labelledby="build-title">
+      <div class="container">
+        <p class="eyebrow reveal">05 &middot; Build</p>
+        <h2 class="title reveal" id="build-title">Three Ways In. <span class="mute">One Enforces.</span></h2>
+        <p class="lead lead--c reveal">Runs from source today, no dependencies. A hosted API with a free daily allowance is in the plan, not live.</p>
+        <div class="split split--rev">
+          <div class="fw reveal">
+            <div class="tabs" role="tablist" aria-label="Ways to use it">
+              <button role="tab" id="tab-signer" aria-selected="true" aria-controls="panel" data-tab="signer"><b>Signer</b><span>Enforces. A blocked payment never gets a signature.</span></button>
+              <button role="tab" id="tab-mcp" aria-selected="false" aria-controls="panel" data-tab="mcp" tabindex="-1"><b>MCP</b><span>Advises. Check tools for the agent, no approve tool.</span></button>
+              <button role="tab" id="tab-cli" aria-selected="false" aria-controls="panel" data-tab="cli" tabindex="-1"><b>CLI</b><span>Ask from a terminal or a script.</span></button>
+            </div>
+          </div>
+          <div class="split__art reveal" aria-hidden="true"><img src="assets/split-layers.webp?v=9c15fa44" width="720" height="720" alt="" loading="lazy"></div>
+        </div>
+        <div id="panel" class="reveal" role="tabpanel" tabindex="0" aria-labelledby="tab-signer">
+          <p class="lead" id="panel-note"></p>
+          <pre class="term"><code id="panel-code"></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="seq-title">
+      <div class="container">
+        <p class="eyebrow reveal">06 &middot; One call</p>
+        <h2 class="title reveal" id="seq-title">One Call, <span class="mute">End to End</span></h2>
+        <div class="cells reveal">
+          <div><span class="cells__n">01</span><h3>Ask</h3><p>The agent sends the payment request to the gate before it signs anything.</p></div>
+          <div><span class="cells__n">02</span><h3>Answer</h3><p>The rules run and the gate says ALLOW, REVIEW or BLOCK, with the reason named.</p></div>
+          <div><span class="cells__n">03</span><h3>Receipt</h3><p>The request and the answer are hashed together, so you can re-check them later.</p></div>
+        </div>
+        <pre class="term reveal" aria-label="Example exchange"><code><span class="c">T+0.00</span>  agent  ->  reinkeep   pay 0.90 USDG to 0x…dEaD
+<span class="c">T+0.00</span>  rules  ->  over_payment_cap
+<span class="c">T+0.01</span>  answer      <span class="w-block">BLOCK</span>   id 8b79ded47376dc61
+<span class="c">T+0.01</span>  agent  &lt;-  do not pay</code></pre>
+        <p class="note reveal">Step 3 of the scripted replay in the repository: a fetched web page told the agent to send 0.90 USDG to a stranger. It is a test scenario, not a live trade.</p>
+      </div>
+    </section>
+
+    <section class="line reveal" aria-label="Status note"><p>Early access. No third-party security audit yet.</p></section>
+
+    <section class="sec" id="status" aria-labelledby="status-title">
+      <div class="container">
+        <p class="eyebrow reveal">07 &middot; Status</p>
+        <h2 class="title reveal" id="status-title">What Is Live, <span class="mute">and What Is Not</span></h2>
+        <div class="status reveal">
+          <div>
+            <h3>Roadmap</h3>
+            <ul class="roadmap" id="roadmap"></ul>
+          </div>
+          <div>
+            <h3>Read this before you rely on it</h3>
+            <ul class="limits" id="limit-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="container site-foot__grid">
+      <div>
+        <p class="foot__brand"><img src="brand/logo.webp" width="32" height="32" alt=""> Reinkeep</p>
+        <p>Early access. No third-party security audit.</p>
+        <p>An independent project. Not affiliated with Robinhood. Not financial advice.</p>
+      </div>
+      <nav aria-label="Gate"><h2>Gate</h2><a href="#gate">Try the Gate</a><a href="#doors">What it buys, how it pays</a><a href="#rules">The 16 rules</a></nav>
+      <nav aria-label="Build"><h2>Build</h2><a href="#build">Signer, MCP, CLI</a><a href="#status">Status</a><a href="https://x.com/reinkeepgate" rel="noopener">X: @reinkeepgate</a></nav>
+    </div>
+    <p class="foot__word" aria-hidden="true">Reinkeep</p>
+  </footer>
+</body>
+</html>

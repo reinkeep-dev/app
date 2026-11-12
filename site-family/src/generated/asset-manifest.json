@@ -1,0 +1,26 @@
+{
+  "poses": [
+    "keep-hello",
+    "keep-allow",
+    "keep-review",
+    "keep-block",
+    "keep-calm"
+  ],
+  "stickers": [
+    "sticker-coin",
+    "sticker-receipt",
+    "sticker-check",
+    "sticker-question",
+    "sticker-cross",
+    "sticker-lock",
+    "sticker-star",
+    "sticker-sparkle",
+    "sticker-horseshoe",
+    "sticker-heart",
+    "sticker-cloud",
+    "sticker-bolt",
+    "sticker-shield",
+    "sticker-dots",
+    "sticker-ring"
+  ]
+}

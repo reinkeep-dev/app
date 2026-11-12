@@ -1,0 +1,87 @@
+[
+  {
+    "state": "live",
+    "title": "Spend rules",
+    "text": "16 rules for caps, recipients, price changes, replays and wrong chains. Tested."
+  },
+  {
+    "state": "live",
+    "title": "Token rules, in the same answer",
+    "text": "9 rules on the token being bought: mint with a live owner, blacklist, pause, upgradeable proxy, ticker copies, low liquidity. Tested; live on the hosted gate, unknown tokens read straight from the chain."
+  },
+  {
+    "state": "live",
+    "title": "Hash-chained audit log",
+    "text": "Every decision is recorded. Editing an old line breaks the chain and is caught."
+  },
+  {
+    "state": "live",
+    "title": "CLI, MCP server and signer wrapper",
+    "text": "Run from source today. Only the signer wrapper enforces; MCP advises."
+  },
+  {
+    "state": "live",
+    "title": "Hosted gate with a free daily allowance",
+    "text": "reinkeep-gate.reinkeep.workers.dev: 25 free checks a day per caller, with per-payer history for caps, duplicates and rate limits."
+  },
+  {
+    "state": "live",
+    "title": "Signed receipts and pay-per-call",
+    "text": "Receipts signed with a published key (EIP-712). After the free checks, $0.01 in USDG per call over x402, settled by the Priors facilitator."
+  },
+  {
+    "state": "live",
+    "title": "Remote MCP and agent discovery",
+    "text": "An MCP server at /mcp with 16 tools, plus llms.txt, an agent card and an OpenAPI file, so an agent can find the gate and call it on its own."
+  },
+  {
+    "state": "live",
+    "title": "Token check, verdict, batch and share pages",
+    "text": "Check a token in the browser, a free verdict API (60 a day), one payment against up to 10 tokens, and a page for every signed receipt. A status page shows what is up."
+  },
+  {
+    "state": "live",
+    "title": "Pre-mortem for builders",
+    "text": "Describe a launch and see the answer agents will get, the risks with fixes, and how similar launches did a day later. Nothing is stored."
+  },
+  {
+    "state": "live",
+    "title": "Launch odds, board, radar and autopsy",
+    "text": "From pools re-checked a day after launch. Shares appear only from 30 re-checked pools, and every answer says how much data is behind it."
+  },
+  {
+    "state": "live",
+    "title": "AI second opinion on a REVIEW",
+    "text": "Ask for it and a larger model gives its lean with the facts it rests on, signed in the receipt. Advice only: the decision stays with the rules."
+  },
+  {
+    "state": "building",
+    "title": "Complete launch data",
+    "text": "The collector misses most launches when it runs on Cloudflare. It is moving to a scheduled job that reads every launch from the chain. Odds, a launch board and autopsies wait for this."
+  },
+  {
+    "state": "live",
+    "title": "Watch held tokens",
+    "text": "After your agent buys, the gate re-reads the token every 30 minutes for 7 days and signs an exit, watch or hold signal, with an optional signed webhook. Costs 5 calls."
+  },
+  {
+    "state": "next",
+    "title": "Token facts, kept fresh",
+    "text": "Facts are read once today. Next: re-read them on a schedule, and look for powers under more names."
+  },
+  {
+    "state": "next",
+    "title": "Holder price for the Reinkeep token",
+    "text": "Holders pay half for paid checks. Built and switched off until the token launches. Paying in the token with a burn waits for the token itself."
+  },
+  {
+    "state": "next",
+    "title": "Saved policies with wallet sign-in",
+    "text": "Keep your rules and your history. Sign in by signing a message, no password."
+  },
+  {
+    "state": "next",
+    "title": "More chains, after Robinhood Chain",
+    "text": "The allowed chain and token are a setting, so the spend rules carry over. Token facts need fresh testing per chain."
+  }
+]
