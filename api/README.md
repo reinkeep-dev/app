@@ -134,8 +134,25 @@ Off until the Reinkeep token launches. The owner then sets two plain vars: `HOLD
 The payment must come from that address (the facilitator's `payer`, else the signed authorization's `from`); otherwise
 a full-price 402, with the gate not run and nothing settled. A failed balance read means full price. Free tier unchanged.
 
-Not built: paying in the Reinkeep token at half price with the tokens burned (Actuary does this with Permit2). It needs
-the launched token's contract and a facilitator that settles it.
+`GET /gate/holder?address=0x...` answers `{ token, network, discountPct, minBalance, address, balance, holder }` from one
+live balance read (404 `holder_price_off` before launch; counted with the free launch-data reads).
+
+## Pay a mandate in the token, burned (`token-burn.ts`)
+
+Off until the token launches. The owner then sets `BURN_TOKEN` (token address), `BURN_AMOUNT` (tokens per mandate, base
+units; a fixed number, re-set when the price moves a lot) and the secret `BURNER_KEY` (a wallet used for nothing else,
+holding a little ETH for gas; never the receipt signer, which the worker refuses). Mandates only.
+
+The mandate 402 then carries `token_option` next to the USDG offer: `{ scheme: "reinkeep-permit2", asset, amount, payTo:
+0x...dEaD, maxTimeoutSeconds: 120, extra: { permit2, spender, percent: 50, burn: true } }`. The buyer approves Permit2
+(`0x000000000022D473030F116dDEE9F6B43aC78BA3`) once, signs a `PermitTransferFrom` for that token and amount with
+`extra.spender` as spender and a deadline at most 120 s away, and resends with `PAYMENT-SIGNATURE` =
+base64 `{ x402Version: 2, accepted: token_option, payload: { owner, permit: { permitted: { token, amount }, nonce, deadline }, signature } }`.
+
+We check the signature, dry-run `permitTransferFrom` with `eth_estimateGas` (a failure takes nothing and makes no
+mandate), make the mandate, then send the burn from the burner wallet. `PAYMENT-RESPONSE` names the transaction and
+`burned: { asset, amount, to }`. Checked against the real Permit2 on chain 4663 on 2026-11-12: a correct permit passes
+the signature check and stops only at `TRANSFER_FROM_FAILED` (the test wallet held nothing).
 
 ## AI Judge (advisory)
 
