@@ -25,7 +25,7 @@ export function RulesMarquee() {
     <section id="rules" className="border-t border-hair py-20">
       <div className="mx-auto max-w-[1040px] px-5">
         <h2 className="text-[34px] font-semibold leading-tight sm:text-[44px]">{rules.length} reasons to stop and ask.</h2>
-        <p className="mt-3 text-[17px] text-ink/60">
+        <p className="mt-3 text-[17px] text-ink/65">
           {pays.length} on how it pays, {buys.length} on what it buys. Every rule in plain words. Hover to pause.
         </p>
       </div>

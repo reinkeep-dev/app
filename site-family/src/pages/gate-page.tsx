@@ -22,12 +22,12 @@ export default function GatePage() {
       <section className="border-t border-hair">
         <div className="mx-auto max-w-[1040px] px-5 py-16">
           <h2 className="text-[28px] font-semibold leading-tight sm:text-[34px]">Same answer your agent gets.</h2>
-          <p className="mt-3 max-w-[560px] text-[17px] text-ink/60">The form above sends this exact call. Your agent does it with one line before every payment.</p>
+          <p className="mt-3 max-w-[560px] text-[17px] text-ink/65">The form above sends this exact call. Your agent does it with one line before every payment.</p>
           <div className="mt-8 grid min-w-0 gap-4 md:grid-cols-2">
             <CodeBlock label="curl" code={CURL_GATE} />
             <CodeBlock label="MCP, in Claude Code" code={MCP_CLAUDE} />
           </div>
-          <p className="mt-6 text-[15px] text-ink/60">
+          <p className="mt-6 text-[15px] text-ink/65">
             Fields, paying and the receipt format are in the <Link to="/docs" className="font-medium text-ink underline underline-offset-4">docs</Link>.
           </p>
         </div>

@@ -87,7 +87,7 @@ export function WaysInSection() {
           </ScrollReveal>
         ))}
       </div>
-      <p className="mt-6 text-center text-[14px] text-ink/50">Only the signer enforces. The MCP tools advise, and an agent that skips them is not stopped.</p>
+      <p className="mt-6 text-center text-[14px] text-ink/65">Only the signer enforces. The MCP tools advise, and an agent that skips them is not stopped.</p>
       <ScrollReveal>
         <dl className="mt-14 divide-y divide-hair border-y border-hair">
           {ENDPOINTS.map((e) => (
@@ -97,7 +97,7 @@ export function WaysInSection() {
                 <a href={e.url} rel="noopener" className="block break-all font-mono text-[14px] text-ink underline decoration-hair underline-offset-4 hover:decoration-ink">
                   {e.url}
                 </a>
-                <p className="mt-1 text-[15px] text-ink/60">{e.note}</p>
+                <p className="mt-1 text-[15px] text-ink/65">{e.note}</p>
               </dd>
             </div>
           ))}

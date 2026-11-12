@@ -22,7 +22,7 @@ function Card({ title, text, children, className }: { title: string; text: strin
       <div className="relative flex min-h-[180px] flex-1 items-center justify-center overflow-hidden p-5">{children}</div>
       <div className="px-5 pb-5">
         <h3 className="text-[16px] font-semibold tracking-tight">{title}</h3>
-        <p className="mt-1 text-[14px] leading-snug text-ink/55">{text}</p>
+        <p className="mt-1 text-[14px] leading-snug text-ink/65">{text}</p>
       </div>
     </div>
   )
@@ -150,7 +150,7 @@ export function BentoSection() {
         <Card title="Strict" text="Caps, recipients and replays, plus mint, blacklist and copycat tokens.">
           <p className="text-[56px] font-semibold leading-none tracking-tight">
             <NumberTicker value={rules.length} className="tracking-tight" />
-            <span className="ml-2 text-[18px] font-medium text-ink/50">rules</span>
+            <span className="ml-2 text-[18px] font-medium text-ink/65">rules</span>
           </p>
         </Card>
         <Card title="Friendly" text="Keep, the gatekeeper, takes the worry out of it.">

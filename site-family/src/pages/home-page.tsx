@@ -26,7 +26,7 @@ export default function HomePage() {
           <ScrollReveal>
             <p className="text-[14px] font-semibold text-grass">Try it here</p>
             <h2 id="decides-title" className="mt-3 text-[34px] font-semibold leading-tight sm:text-[44px]">Go on, try to sneak a payment past Keep.</h2>
-            <p className="mt-3 max-w-[520px] text-[17px] text-ink/60">This toy runs the real rules engine in your browser. Nothing is sent anywhere, so it never touches the live gate.</p>
+            <p className="mt-3 max-w-[520px] text-[17px] text-ink/65">This toy runs the real rules engine in your browser. Nothing is sent anywhere, so it never touches the live gate.</p>
           </ScrollReveal>
           <ScrollReveal delay={0.1} className="mt-10">
             <GateDemo />

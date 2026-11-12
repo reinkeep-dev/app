@@ -8,7 +8,7 @@ function Detail({ label, tone, text, children }: { label: string; tone: string; 
     <ScrollReveal>
       <div className="flex h-[200px] items-center justify-center overflow-hidden rounded-2xl bg-panel">{children}</div>
       <p className={`mt-5 text-[14px] font-semibold ${tone}`}>{label}</p>
-      <p className="mt-2 text-[17px] leading-relaxed text-ink/60">{text}</p>
+      <p className="mt-2 text-[17px] leading-relaxed text-ink/65">{text}</p>
     </ScrollReveal>
   )
 }
@@ -20,7 +20,7 @@ export function DetailsSection() {
     <section className="mx-auto grid max-w-[1040px] gap-12 border-t border-hair px-5 py-20 md:grid-cols-2 md:gap-16">
       <div className="md:sticky md:top-28 md:self-start">
         <h2 className="text-[34px] font-semibold leading-tight sm:text-[44px]">Details that matter.</h2>
-        <p className="mt-3 text-[17px] text-ink/60">The small cases are where agents lose money.</p>
+        <p className="mt-3 text-[17px] text-ink/65">The small cases are where agents lose money.</p>
       </div>
       <div className="grid gap-16">
         <Detail label="Fails closed" tone="text-sky" text="When a fact is missing, the answer is REVIEW, never ALLOW. Unknown is not the same as safe.">

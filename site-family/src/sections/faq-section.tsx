@@ -23,7 +23,7 @@ export function FaqSection() {
         {FAQ.map((f) => (
           <AccordionItem key={f.q} value={f.q} className="border-hair">
             <AccordionTrigger className="py-5 text-[17px] font-medium hover:no-underline">{f.q}</AccordionTrigger>
-            <AccordionContent className="pb-5 text-[16px] leading-relaxed text-ink/60">{f.a}</AccordionContent>
+            <AccordionContent className="pb-5 text-[16px] leading-relaxed text-ink/65">{f.a}</AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

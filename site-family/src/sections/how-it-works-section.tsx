@@ -22,7 +22,7 @@ export function HowItWorksSection() {
             <ScrollReveal key={s.n} delay={i * 0.08} className="h-full">
               <li className="flex h-full flex-col rounded-2xl bg-white p-6">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="font-mono text-[12px] text-ink/45">
+                  <p className="font-mono text-[12px] text-ink/65">
                     {s.n} / 04 · {s.tag}
                   </p>
                   <span aria-hidden="true" className="-mr-1 -mt-1 shrink-0">
@@ -30,7 +30,7 @@ export function HowItWorksSection() {
                   </span>
                 </div>
                 <h3 className="mt-6 text-[20px] font-semibold tracking-tight">{s.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-ink/60">{s.text}</p>
+                <p className="mt-2 text-[15px] leading-relaxed text-ink/65">{s.text}</p>
               </li>
             </ScrollReveal>
           ))}

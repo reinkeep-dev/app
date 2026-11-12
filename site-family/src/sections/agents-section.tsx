@@ -31,10 +31,10 @@ export function AgentsSection() {
           <br />
           Reinkeep answers first.
         </h2>
-        <p className="mt-3 max-w-[560px] text-[17px] text-ink/60">
+        <p className="mt-3 max-w-[560px] text-[17px] text-ink/65">
           It is a tool your agent calls, not a dashboard someone has to watch. No account and no API key: the first 25 checks each day are free, then the agent pays per call.
         </p>
-        <p className="mt-4 text-[15px] text-ink/60">
+        <p className="mt-4 text-[15px] text-ink/65">
           Base URL{' '}
           <a href={GATE} target="_blank" rel="noopener" className="break-all font-mono text-[14px] text-ink underline decoration-hair underline-offset-4 hover:decoration-ink">
             {GATE}
@@ -49,7 +49,7 @@ export function AgentsSection() {
               <span className="font-mono text-[13px] text-ink/40">{w.n}</span>
               <span className="text-[18px] font-semibold">{w.label}</span>
             </p>
-            <p className="mt-1.5 text-[15px] leading-snug text-ink/60">{w.note}</p>
+            <p className="mt-1.5 text-[15px] leading-snug text-ink/65">{w.note}</p>
             <div className="mt-4">
               <CodeBlock code={w.code} label={w.label} />
             </div>
@@ -63,7 +63,7 @@ export function AgentsSection() {
               <dt className="sr-only">{f.small}</dt>
               <dd>
                 <span className="block text-[32px] font-semibold leading-none tracking-tight">{f.big}</span>
-                <span className="mt-2 block text-[15px] text-ink/60">{f.small}</span>
+                <span className="mt-2 block text-[15px] text-ink/65">{f.small}</span>
               </dd>
             </div>
           ))}

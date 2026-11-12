@@ -56,6 +56,7 @@ const FIELDS: [string, string][] = [
   ['request.quotedAmount', 'Optional string. If it differs from amount, the answer is BLOCK amount_changed.'],
   ['policy', 'A preset name (reinkeep-default-v1) or a policy object. Unknown fields are a 400, so a typo never falls back to a default.'],
   ['payer', 'Optional address. Turns on that payer’s history: daily cap, duplicates, rate limit, new recipient. Without it the receipt says "stateful": false.'],
+  ['payerSignature, issuedAt', 'Required with payer. issuedAt is unix seconds (within 5 minutes). payerSignature is the payer wallet’s personal_sign of the 8-line payer message in llms.txt, so nobody can write into someone else’s history.'],
   ['token', 'Optional address of the token this payment buys. Turns on the token rules, so one answer covers how it pays and what it buys.'],
 ]
 
@@ -160,6 +161,11 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
         <CodeBlock label="MCP server URL" code={MCP_URL} />
         <CodeBlock label="Claude Code" code={MCP_CLAUDE} />
         <CodeBlock label="Client config (the exact shape depends on your client)" code={MCP_JSON} />
+        <p>
+          Setup notes and the tool list also live on GitHub:{' '}
+          <a href="https://github.com/reinkeep/mcp" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep/mcp</a>. The launch data the gate reads is open too:{' '}
+          <a href="https://github.com/reinkeep/data" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep/data</a>.
+        </p>
         <p>Tools:</p>
         <dl className="divide-y divide-hair border-y border-hair">
           {[
@@ -200,7 +206,7 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
 
       <Section id="limits" title="Limits">
         <ul className="list-disc space-y-1.5 pl-5 text-[15px]">
-          <li><strong className="font-semibold text-ink">Not audited.</strong> An answer is rule-based, not a guarantee and not financial advice. Do not use it with money you cannot lose.</li>
+          <li><strong className="font-semibold text-ink">Reviewed by our team, no outside audit yet.</strong> An answer is rule-based, not a guarantee and not financial advice. Do not use it with money you cannot lose.</li>
           <li>Unknown never passes. A token the collector never saw, or a fact that could not be read, is a REVIEW.</li>
           <li>Without a <code className={code}>payer</code>, the history rules (daily cap, duplicates, rate limit, new recipient) do not run.</li>
           <li>Token facts cover tokens the collector saw. A token read live has unknown liquidity, so it is a REVIEW at best.</li>
