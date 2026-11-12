@@ -5,7 +5,7 @@ import test from "node:test";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { ContractFacts } from "../collector/src/types.ts";
 import type { TokenFacts } from "../collector/src/token-facts.ts";
-import { MandateWatcher, watcherFetch, type MandateStorage } from "../api/src/mandate-object.ts";
+import { MandateWatcher, TEST_GAP_MS, watcherFetch, type MandateStorage } from "../api/src/mandate-object.ts";
 import { handleMandates, type MandateNamespace } from "../api/src/mandate-routes.ts";
 import {
   CHECK_EVERY_MS, FIELD_ROLE, MANDATE_MS, MAX_EVENTS, checkWebhookUrl, chooseAction, diffContract, verifySignal, webhookSignature, type FreshRead,
@@ -238,6 +238,15 @@ test("test webhook: sends the last signal as a 'test' event; a receiver that ans
   await quiet.w.create(ID, { token: TOKEN, webhookUrl: null });
   await assert.rejects(quiet.w.test(), (e: any) => e.status === 400 && e.code === "no_webhook");
   await assert.rejects(bench().w.test(), (e: any) => e.status === 404, "no mandate at all");
+});
+
+test("test webhook: at most one a minute, so the free route cannot flood someone else's URL", async () => {
+  const b = bench();
+  await b.w.create(ID, { token: TOKEN, webhookUrl: HOOK });
+  await b.w.test();
+  await assert.rejects(b.w.test(), (e: any) => e.status === 429 && e.code === "test_too_soon");
+  b.clock.now += TEST_GAP_MS;
+  assert.equal((await b.w.test()).event.kind, "test");
 });
 
 test("signals verify: genuine ok, expired after an hour, a changed action or another signer fails", async () => {

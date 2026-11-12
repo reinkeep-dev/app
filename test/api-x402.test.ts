@@ -8,7 +8,7 @@ import type { LedgerStorage } from "../api/src/gate-store.ts";
 import { FreeTier } from "../api/src/metering.ts";
 import { fromBase64, toBase64 } from "../api/src/x402.ts";
 import { makeWorker, PayerLedger } from "../api/src/worker.ts";
-import { PAYER, USDG, goodRequest, knownPolicy } from "./api-fixture.ts";
+import { PAYER, USDG, goodRequest, knownPolicy, withProof } from "./api-fixture.ts";
 
 const OWNER = "0x1111111111111111111111111111111111111111";
 const body = (over: Record<string, unknown> = {}) => ({ request: goodRequest(), policy: knownPolicy, ...over });
@@ -60,6 +60,8 @@ function setup(config: Record<string, unknown> = { X402_PAY_TO: OWNER, PRIORS_AP
     }),
   };
   const send = async (path: string, over: { ip?: string; b?: unknown; sig?: unknown; method?: string; headers?: Record<string, string> } = {}) => {
+    // A test payer in the body signs it with the real clock, which the worker judges by.
+    if (over.b && typeof over.b === "object") over = { ...over, b: await withProof(over.b as Record<string, any>, Date.now()) };
     const headers: Record<string, string> = { "content-type": "application/json", ...over.headers };
     if (over.ip) headers["cf-connecting-ip"] = over.ip;
     if (over.sig !== undefined) headers["payment-signature"] = typeof over.sig === "string" ? over.sig : toBase64(over.sig);

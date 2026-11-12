@@ -34,6 +34,22 @@ const AUTOPSY = "/api/v1/autopsy/";
 const DATA_PATHS = new Set(["/api/v1/odds", "/api/v1/board", "/api/v1/radar"]);
 const PENDING_WAITS = [1000, 2000, 2000]; // ms between /settle retries
 
+// Who a free-tier counter belongs to. IPv4: the address. IPv6: its /64, because one home or server is usually given a
+// whole /64 and could otherwise take a fresh address, and a fresh free tier, for every request.
+export function callerKey(req: Request): string {
+  const raw = (req.headers.get("cf-connecting-ip") ?? "").trim().toLowerCase();
+  if (!raw.includes(":")) return raw || "unknown";
+  let groups = raw.split(":");
+  if (raw.includes("::")) {
+    // Expand "::" so the first four groups are the real network part (e.g. 2001:db8::1 -> 2001:db8:0:0).
+    const [head, tail] = raw.split("::");
+    const left = head ? head.split(":") : [];
+    const right = tail ? tail.split(":") : [];
+    groups = [...left, ...Array(Math.max(8 - left.length - right.length, 0)).fill("0"), ...right];
+  }
+  return groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "")).join(":") + "::/64";
+}
+
 const withHeaders = (res: Response, extra: Record<string, string>): Response => {
   // Responses that came from a Durable Object stub are immutable, so build a new one.
   const out = new Response(res.body, { status: res.status, headers: res.headers });
@@ -92,7 +108,7 @@ export async function meter(
 ): Promise<Response | null> {
   const path = new URL(req.url).pathname.replace(/\/+$/, "");
   if (req.method === "GET" && path === GATE + "/pricing") return pricing(env);
-  const ip = (req.headers.get("cf-connecting-ip") ?? "").trim() || "unknown";
+  const ip = callerKey(req);
   if (req.method === "GET" && path === GATE + "/holder") return holderLookup(req, ip, env, deps.holderBalance);
   if (req.method === "GET" && path.startsWith(VERDICT)) return meterVerdict(req, path.slice(VERDICT.length), ip, env, deps.route);
   if (req.method === "GET" && (DATA_PATHS.has(path) || path.startsWith(AUTOPSY))) {

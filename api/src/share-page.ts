@@ -78,7 +78,7 @@ ${judge}
 <dl>${row("ID", `<code>${esc(id)}</code>`)}${row("Issued", issued ? esc(issued) : `<span class="muted">unknown</span>`)}${row("Signer", `<code>${esc(text(r.signer))}</code>`)}${row("Check", valid)}</dl>
 <footer>
 <a href="/api/v1/receipts/${esc(encodeURIComponent(id))}">Receipt as JSON</a> &middot; <a href="${SITE_URL}">Reinkeep AI</a>
-<p class="muted">Rule-based and not audited. Not financial advice.</p>
+<p class="muted">Rule-based. Reviewed by our team, no outside audit yet. Not financial advice.</p>
 </footer>`;
   return page(`${decision} · Reinkeep AI receipt`, html, 200, { "cache-control": "public, max-age=60" });
 }

@@ -9,7 +9,7 @@ import type { LedgerEntry } from "../engine/policy.ts";
 import type { LedgerStorage } from "../api/src/gate-store.ts";
 import worker, { PayerLedger } from "../api/src/worker.ts";
 import { MAX_BODY_BYTES } from "../api/src/http-handler.ts";
-import { PAYER, PAY_TO, goodRequest, knownPolicy } from "./api-fixture.ts";
+import { PAYER, PAYER_B, PAY_TO, goodRequest, knownPolicy, withProof } from "./api-fixture.ts";
 
 // Every read and write waits a tick, as real storage does, so requests really interleave.
 function slowStorage(): LedgerStorage & { data: Map<string, LedgerEntry[]> } {
@@ -46,7 +46,9 @@ function setup() {
   };
   // Cloudflare may evict an idle object; the next request builds a new one over the same storage.
   const restart = () => instances.clear();
-  const post = async (body: unknown) => {
+  // The worker judges with the real clock, so the test payer signs with it too.
+  const post = async (raw: unknown) => {
+    const body = typeof raw === "object" && raw !== null ? await withProof(raw as Record<string, any>, Date.now()) : raw;
     const res = await worker.fetch(new Request("https://gate.test/api/v1/gate", { method: "POST", headers: { "content-type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) }), env);
     return { status: res.status, data: (await res.json()) as any };
   };
@@ -93,7 +95,7 @@ test("the history survives the object being restarted (it lives in storage, not 
 
 test("payers do not share a history", async () => {
   const s = setup();
-  const other = "0x00000000000000000000000000000000000000b2";
+  const other = PAYER_B;
   await s.post({ request: goodRequest(), policy: knownPolicy, payer: PAYER });
   const b = await s.post({ request: goodRequest(), policy: knownPolicy, payer: other });
   assert.equal(b.data.decision, "ALLOW");

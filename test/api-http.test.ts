@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { defaultPolicy } from "../engine/policy.ts";
 import { MAX_BODY_BYTES } from "../api/src/http-handler.ts";
-import { goodRequest, makeApp } from "./api-fixture.ts";
+import { PAYER, goodRequest, makeApp } from "./api-fixture.ts";
 
 test("unknown path is a 404 in JSON, wrong method is a 405", async () => {
   const app = makeApp();
@@ -74,7 +74,7 @@ test("a server fault is a plain 500 that leaks nothing", async () => {
   const silence = console.error;
   console.error = () => {};
   try {
-    const r = await app.gate(goodRequest(), { payer: "0x00000000000000000000000000000000000000a1" });
+    const r = await app.gate(goodRequest(), { payer: PAYER });
     assert.equal(r.status, 500);
     assert.equal(r.data.error.code, "internal");
     assert.equal(r.text.includes("hunter2"), false);

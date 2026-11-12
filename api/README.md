@@ -14,7 +14,7 @@ npm run typecheck
 
 | Method and path | What it does |
 |---|---|
-| `POST /gate` | `{ request, policy?, payer?, token?, judge? }` returns `{ id, decision, reasons[], receipt, explanation, judgement?, shareUrl? }` |
+| `POST /gate` | `{ request, policy?, payer?, payerSignature?, issuedAt?, token?, judge? }` returns `{ id, decision, reasons[], receipt, explanation, judgement?, shareUrl? }` |
 | `POST /receipts/verify` | `{ receipt }` returns `{ valid: true, signer }` or `{ valid: false, reason }` |
 | `GET /receipts/signer` | The signer address, EIP-712 domain and types. All a stranger needs to check a receipt. |
 | `POST /gate/x402` | Same as `POST /gate`, always paid (no free tier). `402` until a `PAYMENT-SIGNATURE` header is sent. |
@@ -46,7 +46,11 @@ Outside `/api/v1` (not in `openapi.json`; listed in `llms.txt`):
 `request` fields: `network`, `asset`, `amount` (string, base units), `decimals`, `payTo`, `resourceUrl`,
 `validForSeconds`, optional `quotedAmount`. The server sets the time; a `now` field is refused.
 `policy` is a preset name or an object (unknown fields are an error, so a typo never silently falls back to a default).
-`payer` (an address) turns on that payer's history: daily cap, duplicates, rate limit, new recipient.
+`payer` (an address) turns on that payer's history: daily cap, duplicates, rate limit, new recipient. It must come
+with `issuedAt` (unix seconds, within 5 minutes) and `payerSignature`, the payer wallet's personal_sign of
+`payerMessage()` in `src/payer-proof.ts` (8 lines: "Reinkeep gate request", payer, network, asset, amount, payTo,
+resource, issuedAt). Without it: `400 payer_signature_required`; wrong signer or edited request: `401
+payer_signature_invalid`; too old: `401 payer_signature_expired`. So nobody can fill someone else's history.
 `token` (an address) is the token this payment buys. It turns on the token rules, so ONE answer covers how the
 agent pays and what it buys; a BLOCK from either side wins over a REVIEW from the other.
 
@@ -207,7 +211,7 @@ recovers the signer with `recoverTypedDataAddress`. Receipts record a moment; th
   The free tier is the only abuse limit; there is no other rate limit.
 - **Token facts**: the collector's data when it has the token (D1 bound as `DB`), otherwise the contract is read live
   from `RPC_URL`. Liquidity is then unknown, so such a token is a REVIEW at best.
-- **No audit.** Do not use it with money you cannot lose.
+- **Reviewed by our team, no outside audit yet.** Do not use it with money you cannot lose.
 
 ## Paying (x402 v2)
 

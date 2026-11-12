@@ -15,7 +15,7 @@ export const API = "/api/v1";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const VERSION = "0.1.0";
 const DESCRIPTION =
-  "Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain 4663, USDG). Send the payment request, get ALLOW, REVIEW or BLOCK, the rules that decided it, and a receipt signed with EIP-712. Not audited.";
+  "Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain 4663, USDG). Send the payment request, get ALLOW, REVIEW or BLOCK, the rules that decided it, and a receipt signed with EIP-712. Reviewed by our team, no outside audit yet.";
 
 type Endpoint = { method: "GET" | "POST" | "DELETE"; path: string; summary: string };
 // Every REST endpoint, path relative to /api/v1. The OpenAPI file and llms.txt are both built from this.
@@ -52,7 +52,7 @@ export function llmsTxt(): string {
   const endpoints = ENDPOINTS.map((e) => `- ${e.method} ${API}${e.path}: ${e.summary}`).join("\n");
   return `# Reinkeep AI
 
-> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide. AI only explains the answer in plain words. Not audited. Do not use it with money you cannot lose.
+> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide. AI only explains the answer in plain words. Reviewed by our team, no outside audit yet. Do not use it with money you cannot lose.
 
 ## Connect
 - REST API base: ${BASE_URL}${API} (CORS open, no API key)
@@ -119,7 +119,17 @@ GET ${BASE_URL}/api/status (JSON) and ${BASE_URL}/status (HTML): whether the sig
 ## Request fields (POST ${API}/gate)
 - request (required): network, asset, amount (string, base units), decimals (integer 0-255), payTo (0x address), resourceUrl (string, max 2048), validForSeconds (number, 0-31536000), optional quotedAmount (string). The server sets the time; a \`now\` field is refused.
 - policy (optional): a preset name (${PRESET_NAMES.join(", ")}) or a policy object. Unknown fields are a 400, so a typo never silently falls back to a default. Default is ${PRESET_NAMES[0]}.
-- payer (optional): your address. Turns on that payer's history: daily cap, duplicates, rate limit, new recipient. Without it the receipt says "stateful": false and history rules do not fire.
+- payer (optional): your address. Turns on that payer's history: daily cap, duplicates, rate limit, new recipient. Without it the receipt says "stateful": false and history rules do not fire. A payer needs payerSignature and issuedAt (below), so nobody can write into someone else's history.
+- payerSignature + issuedAt (required with payer): issuedAt is unix seconds (within 5 minutes of the server clock). payerSignature is a personal_sign (EIP-191, e.g. viem signMessage) by the payer wallet of exactly these 8 lines, joined with "\n", addresses lowercase:
+  Reinkeep gate request
+  payer: <payer>
+  network: <request.network>
+  asset: <request.asset>
+  amount: <request.amount>
+  payTo: <request.payTo>
+  resource: <request.resourceUrl>
+  issuedAt: <issuedAt>
+  Missing: 400 payer_signature_required. Wrong signer or a changed request: 401 payer_signature_invalid. Too old: 401 payer_signature_expired. EOA wallets only for now.
 - token (optional): the address of the token this payment buys. Turns on the token rules, so one answer covers how the agent pays and what it buys.
 - judge (optional, true/false): on a REVIEW, also ask the AI Judge (a 70B Workers AI model) for a second opinion. Advisory only, see below.
 - Body is JSON (content-type application/json), at most 16 KiB. Other body fields are a 400.
@@ -153,7 +163,7 @@ A receipt is \`Receipt(string id, string decision, bytes32 policyHash, bytes32 b
 2. Or do it yourself: GET ${API}/receipts/signer, recompute both hashes, recover the signer with recoverTypedDataAddress and compare. Receipts record a moment; they do not expire.
 
 ## Limits
-- Not audited. An answer is rule-based, not a guarantee and not financial advice.
+- Reviewed by our team, no outside audit yet. An answer is rule-based, not a guarantee and not financial advice.
 - Unknown never passes: a token the collector never saw, or a fact that could not be read, is a REVIEW.
 - Without a \`payer\`, history rules (daily cap, duplicates, rate limit, new recipient) do not run.
 - Token facts cover the tokens the collector saw; liquidity is unknown for a token read live, so that token is a REVIEW at best.
@@ -478,7 +488,9 @@ export function openApi() {
           properties: {
             request: ref("PaymentRequest"),
             policy: { description: `A preset name (${PRESET_NAMES.join(", ")}) or a policy object`, oneOf: [{ type: "string", enum: PRESET_NAMES }, ref("Policy")] },
-            payer: addr("Turns on this payer's history rules"),
+            payer: addr("Turns on this payer's history rules; needs payerSignature and issuedAt"),
+            payerSignature: { type: "string", pattern: "^0x[0-9a-fA-F]+$", description: "personal_sign by payer of the payer-proof message (see llms.txt)" },
+            issuedAt: { type: "integer", description: "Unix seconds the payer signed at, within 300 s of now" },
             token: addr("Token this payment buys; turns on the token rules"),
             judge: { type: "boolean", description: "On a REVIEW, add the AI Judge's advisory second opinion" },
           },

@@ -10,6 +10,8 @@ export type GateInput = {
   policy: Policy;
   policyName: string;
   payer?: string;
+  payerSignature?: string; // personal_sign by payer of payerMessage() (payer-proof.ts)
+  issuedAt?: number; // unix seconds the payer signed at
   token?: string; // the token this payment buys, lowercase (the collector stores tokens lowercase)
   judge?: boolean; // ask the AI Judge for an advisory second opinion when the rules say REVIEW (judge.ts)
 };
@@ -124,11 +126,19 @@ function parsePolicy(v: unknown): { policy: Policy; name: string } {
 
 export function parseGateBody(raw: unknown): GateInput {
   if (!isObject(raw)) return bad("invalid_body", "Body must be a JSON object.");
-  onlyKeys(raw, ["request", "policy", "payer", "token", "judge"], "body", "unknown_field");
+  onlyKeys(raw, ["request", "policy", "payer", "payerSignature", "issuedAt", "token", "judge"], "body", "unknown_field");
   if (raw.request === undefined) return bad("missing_request", "Body needs a request object.");
   const { policy, name } = parsePolicy(raw.policy);
   const input: GateInput = { request: parseRequest(raw.request), policy, policyName: name };
   if (raw.payer !== undefined) input.payer = address(raw.payer, "payer").toLowerCase();
+  if (raw.payerSignature !== undefined) {
+    const sig = str(raw.payerSignature, "payerSignature", 200);
+    input.payerSignature = /^0x[0-9a-fA-F]+$/.test(sig) ? sig : bad("invalid_field", "payerSignature must be 0x hex.");
+  }
+  if (raw.issuedAt !== undefined) input.issuedAt = num(raw.issuedAt, "issuedAt", 0, 1e11, true);
+  if ((input.payerSignature !== undefined || input.issuedAt !== undefined) && !input.payer) {
+    return bad("payer_missing", "payerSignature and issuedAt only make sense with a payer.");
+  }
   if (raw.token !== undefined) input.token = address(raw.token, "token").toLowerCase();
   if (raw.judge !== undefined) {
     if (typeof raw.judge !== "boolean") return bad("invalid_field", "judge must be true or false.");

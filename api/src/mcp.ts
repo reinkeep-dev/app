@@ -60,7 +60,9 @@ const TOOLS: { name: string; description: string; inputSchema: Schema }[] = [
       properties: {
         request: REQUEST_SCHEMA,
         policy: { type: ["string", "object"], description: "Preset name (see list_presets) or a policy object. Omit for the default." },
-        payer: { type: "string", description: "Your wallet address. Turns on your history: daily cap, duplicates, rate limit, new recipient." },
+        payer: { type: "string", description: "Your wallet address. Turns on your history: daily cap, duplicates, rate limit, new recipient. Needs payerSignature and issuedAt." },
+        payerSignature: { type: "string", description: "personal_sign by payer of the 8-line message in llms.txt (Payer proof). Required with payer." },
+        issuedAt: { type: "integer", description: "Unix seconds when payerSignature was made; within 5 minutes of now. Required with payer." },
         token: { type: "string", description: "Address of the token this payment buys. Turns on the token rules (mint, blacklist, liquidity)." },
         judge: { type: "boolean", description: "On a REVIEW, add the AI Judge's second opinion (lean, confidence, cites). Advisory: the decision stays REVIEW." },
         payment_signature: { type: "string", pattern: "^[A-Za-z0-9+/=_-]+$", description: "Base64 x402 payment payload. Only needed after the free calls are used up." },
@@ -351,7 +353,7 @@ async function callTool(name: string, args: Record<string, any>, req: Request, c
   switch (name) {
     case "gate_check": {
       const body: Record<string, unknown> = { request: args.request };
-      for (const k of ["policy", "payer", "token", "judge"]) if (args[k] !== undefined) body[k] = args[k];
+      for (const k of ["policy", "payer", "payerSignature", "issuedAt", "token", "judge"]) if (args[k] !== undefined) body[k] = args[k];
       const sig = typeof args.payment_signature === "string" ? args.payment_signature : undefined;
       const r = await call("POST", "/api/v1/gate", body, sig ? { "payment-signature": sig } : {});
       if (r.status === 200 && r.data) return toolText(gateText(r.data), r.data);

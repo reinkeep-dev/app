@@ -11,6 +11,7 @@ import { ENGINE, signReceipt, type Decision, type Receipt, type ReceiptBody } fr
 import { BASE_URL } from "./discovery.ts";
 import { saveReceipt, type ReceiptStore } from "./receipt-store.ts";
 import type { BatchInput, GateInput } from "./request-validation.ts";
+import { checkPayerProof } from "./payer-proof.ts";
 
 export type GateDeps = {
   account: PrivateKeyAccount;
@@ -86,6 +87,8 @@ export async function explainSafely(input: ExplainInput, deps: Pick<GateDeps, "e
 export async function gate(input: GateInput, deps: GateDeps): Promise<GateResult> {
   const nowMs = deps.now();
   const request = { ...input.request, now: nowMs };
+  // A payer's history is only touched by that payer: checked before anything is read or written (payer-proof.ts).
+  if (input.payer) await checkPayerProof({ ...input, payer: input.payer }, nowMs);
   const stateful = Boolean(input.payer && deps.store);
   // Read before taking the payer's lock: token facts do not depend on the payer's history.
   const buying = input.token ? await readFacts(input.token, deps) : undefined;

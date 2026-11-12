@@ -4,10 +4,25 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { MemoryGateStore, type GateStore } from "../api/src/gate-store.ts";
 import { createHandler } from "../api/src/http-handler.ts";
 import type { GateDeps } from "../api/src/gate-service.ts";
+import { payerMessage } from "../api/src/payer-proof.ts";
 
 export const T0 = 1_700_000_000_000; // ms
 export const PAY_TO = "0xAbCdEf0000000000000000000000000000000001";
-export const PAYER = "0x00000000000000000000000000000000000000a1";
+// Test payers are real keys (fixed, test-only), because a payer's history needs the payer's own signature (payer-proof.ts).
+const PAYER_KEYS = ["0x" + "a1".repeat(32), "0x" + "b2".repeat(32), "0x" + "c3".repeat(32)] as const;
+const PAYER_ACCOUNTS = PAYER_KEYS.map((k) => privateKeyToAccount(k as `0x${string}`));
+export const [PAYER, PAYER_B, PAYER_C] = PAYER_ACCOUNTS.map((a) => a.address.toLowerCase());
+
+// Adds payerSignature + issuedAt to a gate body whose payer is one of the test payers (any letter case), unless the
+// body already has them or the payer is not ours. nowMs is the server clock the request will be judged at.
+export async function withProof(body: Record<string, any>, nowMs: number): Promise<Record<string, any>> {
+  if (typeof body.payer !== "string" || body.payerSignature !== undefined || typeof body.request !== "object") return body;
+  const account = PAYER_ACCOUNTS.find((a) => a.address.toLowerCase() === body.payer.toLowerCase());
+  if (!account) return body;
+  const issuedAt = Math.floor(nowMs / 1000);
+  const payerSignature = await account.signMessage({ message: payerMessage(body.payer, body.request, issuedAt) });
+  return { ...body, issuedAt, payerSignature };
+}
 export const USDG = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
 
 export const goodRequest = (over: Record<string, unknown> = {}) => ({
@@ -51,6 +66,7 @@ export function makeApp(opts: { store?: GateStore | null; tokenFacts?: GateDeps[
     return { status: res.status, headers: res.headers, text, data };
   }
 
-  const gate = (request: Record<string, unknown>, extra: Record<string, unknown> = {}) => send("POST", "/api/v1/gate", { request, ...extra });
+  const gate = async (request: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+    send("POST", "/api/v1/gate", await withProof({ request, ...extra }, clock.now));
   return { key, account, clock, handle, send, gate };
 }
