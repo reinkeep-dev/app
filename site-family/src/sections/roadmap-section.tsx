@@ -5,7 +5,7 @@ import roadmap from '@data/roadmap.json'
 const STATE = {
   live: { label: 'Live', cls: 'bg-allow/12 text-allow' },
   building: { label: 'Building', cls: 'bg-review/12 text-review' },
-  next: { label: 'Next', cls: 'bg-ink/8 text-ink/60' },
+  next: { label: 'Next', cls: 'bg-ink/8 text-ink/65' },
 } as const
 
 export function RoadmapSection() {
@@ -22,7 +22,7 @@ export function RoadmapSection() {
               <article className="h-full rounded-2xl bg-panel p-6">
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${s.cls}`}>{s.label}</span>
                 <h3 className="mt-3 text-[18px] font-semibold tracking-tight">{item.title}</h3>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-ink/60">{item.text}</p>
+                <p className="mt-1.5 text-[15px] leading-relaxed text-ink/65">{item.text}</p>
               </article>
             </ScrollReveal>
           )

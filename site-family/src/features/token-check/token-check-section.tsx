@@ -3,11 +3,11 @@ import { motion } from 'motion/react'
 import samples from '@data/sample-tokens.json'
 import { cn } from '@/lib/utils'
 import { ScrollReveal } from '@/components/scroll-reveal'
-import { CheckError, fetchVerdict, isAddress, type CheckFailure, type Decision, type TokenFacts, type Verdict } from './token-check-api'
+import { TokenCheckScanner } from './token-check-scanner'
+import { CheckError, fetchVerdict, isAddress, type CheckFailure, type Decision, type Verdict } from './token-check-api'
 
 const WORD: Record<Decision, string> = { ALLOW: 'ALLOW', REVIEW: 'REVIEW', BLOCK: 'BLOCK' }
 const TONE: Record<Decision, string> = { ALLOW: 'text-allow', REVIEW: 'text-review', BLOCK: 'text-block' }
-const POSE: Record<Decision, string> = { ALLOW: 'keep-allow', REVIEW: 'keep-review', BLOCK: 'keep-block' }
 
 const EXAMPLES = [
   { label: 'USDG', address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168' },
@@ -20,20 +20,6 @@ const ERRORS: Record<CheckFailure, string> = {
   not_live: 'This check goes live soon.',
   failed: 'Could not reach the checker just now. Try again in a moment.',
 }
-
-const FACT_ROWS: [keyof TokenFacts, string][] = [
-  ['is_contract', 'Is a contract'],
-  ['mint_with_live_owner', 'Owner can mint more'],
-  ['has_blacklist', 'Can blacklist wallets'],
-  ['has_pause', 'Can pause transfers'],
-  ['is_proxy', 'Is a proxy'],
-  ['has_upgrade', 'Code can be upgraded'],
-  ['ticker_clone_of_older', 'Copies an older ticker'],
-]
-
-const yesNo = (v: boolean | null | undefined) => (v === true ? 'Yes' : v === false ? 'No' : 'Unknown')
-const usd = (v: number | null | undefined) =>
-  typeof v === 'number' ? v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) : 'Unknown'
 
 type State = { phase: 'idle' } | { phase: 'loading' } | { phase: 'error'; kind: CheckFailure } | { phase: 'done'; verdict: Verdict }
 
@@ -116,7 +102,7 @@ export function TokenCheckSection() {
               </p>
             )}
             <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[14px]">
-              <span className="text-ink/60">Try one:</span>
+              <span className="text-ink/65">Try one:</span>
               {EXAMPLES.map((ex) => (
                 <button
                   key={ex.address}
@@ -130,18 +116,18 @@ export function TokenCheckSection() {
                 </button>
               ))}
             </div>
-            <p className="mt-4 text-[13px] text-ink/60">Free, 60 checks a day. Rules decide; AI only explains.</p>
+            <p className="mt-4 text-[13px] text-ink/65">Free, 60 checks a day. Rules decide; AI only explains.</p>
           </form>
         </ScrollReveal>
 
         <div className="mt-8" aria-live="polite" aria-busy={loading}>
-          {state.phase === 'loading' && <p className="text-[15px] text-ink/60">Reading the contract…</p>}
+          <TokenCheckScanner address={trimmed} loading={loading} verdict={state.phase === 'done' ? state.verdict : null} />
           {state.phase === 'error' && state.kind !== 'bad_address' && (
-            <p role="status" className="max-w-[680px] rounded-2xl bg-panel p-5 text-[15px] text-ink/80">
+            <p role="status" className="mt-4 max-w-[680px] rounded-2xl bg-panel p-5 text-[15px] text-ink/80">
               {ERRORS[state.kind]}
             </p>
           )}
-          {state.phase === 'done' && <ResultCard verdict={state.verdict} />}
+          {state.phase === 'done' && <div className="mt-4"><ResultCard verdict={state.verdict} /></div>}
         </div>
       </div>
     </section>
@@ -159,23 +145,18 @@ function ResultCard({ verdict }: { verdict: Verdict }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.1, 1] }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[13px] font-medium text-ink/60">{symbol ? `${symbol} · ` : ''}The gate answers</p>
-          <p className={cn('mt-1 text-[48px] font-semibold leading-none tracking-tight min-[400px]:text-[64px]', TONE[decision])}>{WORD[decision]}</p>
-          <p className="mt-2 break-all font-mono text-[12.5px] text-ink/60">{verdict.token}</p>
-        </div>
-        <img src={`/assets/${POSE[decision]}.webp`} alt="" width={110} height={110} className="size-20 shrink-0 sm:size-[110px]" />
-      </div>
+      <p className="text-[13px] font-medium text-ink/65">
+        {symbol ? `${symbol} · ` : ''}The gate answers <span className={cn('font-semibold', TONE[decision])}>{WORD[decision]}</span>
+      </p>
 
-      <div className="mt-5">
-        <p className="text-[13px] font-medium text-ink/60">{explanation.source === 'ai' ? 'Explained by AI' : 'From the rules'}</p>
+      <div className="mt-3">
+        <p className="text-[13px] font-medium text-ink/65">{explanation.source === 'ai' ? 'Explained by AI' : 'From the rules'}</p>
         <p className="mt-1 text-[16px] leading-relaxed">{explanation.text}</p>
       </div>
 
-      <h3 className="mt-5 text-[13px] font-medium text-ink/60">Reasons</h3>
+      <h3 className="mt-5 text-[13px] font-medium text-ink/65">Reasons</h3>
       <ul className="mt-1 divide-y divide-hair border-y border-hair text-[14px]">
-        {reasons.length === 0 && <li className="py-2.5 text-ink/60">No rule fired.</li>}
+        {reasons.length === 0 && <li className="py-2.5 text-ink/65">No rule fired.</li>}
         {reasons.map((r) => (
           <li key={r.code} className="grid gap-1 py-2.5 sm:grid-cols-[210px_1fr] sm:gap-3">
             <code className="break-words font-mono text-[13px] text-ink">{r.code}</code>
@@ -183,23 +164,6 @@ function ResultCard({ verdict }: { verdict: Verdict }) {
           </li>
         ))}
       </ul>
-
-      <h3 className="mt-5 text-[13px] font-medium text-ink/60">What we could read</h3>
-      <dl className="mt-1 divide-y divide-hair border-y border-hair text-[14px]">
-        {FACT_ROWS.map(([key, label]) => (
-          <Fact key={key} label={label} value={yesNo(facts[key] as boolean | null | undefined)} />
-        ))}
-        <Fact label="Liquidity seen" value={usd(facts.seen_liquidity_usd)} />
-      </dl>
     </motion.div>
-  )
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
-      <dt className="text-ink/70">{label}</dt>
-      <dd className={cn('font-mono text-[13px]', value === 'Unknown' ? 'text-ink/60' : 'text-ink')}>{value}</dd>
-    </div>
   )
 }

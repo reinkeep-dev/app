@@ -2,6 +2,7 @@ import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, type
 import { useEffect, useRef, type PointerEvent } from 'react'
 import { Link } from 'react-router'
 import { SiteSticker } from '@/components/site-sticker'
+import { TokenCaSlip } from '@/components/token-ca-slip'
 
 // Family-style hero: one headline, one line, two pills, and a crowd of stickers you can play with.
 // Positions are % of the hero box so the clusters scale with the window. The stickers drift, each at its own depth so
@@ -145,7 +146,7 @@ export function HeroSection() {
           You hold the reins.
         </motion.h1>
         <motion.p
-          className="mt-4 max-w-[360px] text-[17px] leading-relaxed text-ink/60"
+          className="mt-4 max-w-[360px] text-[17px] leading-relaxed text-ink/65"
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1, ease: [0.2, 0.7, 0.1, 1] }}
@@ -164,6 +165,9 @@ export function HeroSection() {
           <Link to="/check" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-panel px-6 text-[15px] font-medium outline-none transition-colors hover:bg-hair focus-visible:ring-2 focus-visible:ring-ink">
             Check a token
           </Link>
+        </motion.div>
+        <motion.div className="flex w-full justify-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+          <TokenCaSlip />
         </motion.div>
       </div>
     </section>

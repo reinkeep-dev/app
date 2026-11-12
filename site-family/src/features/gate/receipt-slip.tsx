@@ -22,17 +22,17 @@ export function ReceiptSlip() {
           transition={{ duration: 1.4, ease: [0.3, 0.8, 0.2, 1] }}
         >
           <p className="text-center text-[13px] font-semibold tracking-wide">REINKEEP RECEIPT</p>
-          <p className="mt-1 text-center font-mono text-[11px] text-ink/45">sample</p>
+          <p className="mt-1 text-center font-mono text-[11px] text-ink/65">sample</p>
           <dl className="mt-5 space-y-2 border-y border-dashed border-ink/20 py-4 font-mono text-[12.5px]">
             {ROWS.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3">
-                <dt className="text-ink/50">{k}</dt>
+                <dt className="text-ink/65">{k}</dt>
                 <dd>{v}</dd>
               </div>
             ))}
           </dl>
           <p className="mt-4 text-center text-[34px] font-semibold tracking-tight text-block">BLOCK</p>
-          <p className="mt-2 text-center font-mono text-[12px] text-ink/50">signed · EIP-712 · chain 4663</p>
+          <p className="mt-2 text-center font-mono text-[12px] text-ink/65">signed · EIP-712 · chain 4663</p>
         </motion.div>
       </div>
     </div>

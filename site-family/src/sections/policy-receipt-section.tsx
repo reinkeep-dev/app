@@ -31,7 +31,7 @@ export function PolicyReceiptSection() {
       </ScrollReveal>
       <div className="mt-10 grid items-start gap-10 md:grid-cols-2 md:gap-12">
         <ScrollReveal className="min-w-0">
-          <p className="text-[17px] leading-relaxed text-ink/60">
+          <p className="text-[17px] leading-relaxed text-ink/65">
             No score to trust. A policy is a short piece of JSON, and every answer names the rule that fired. A token the gate knows nothing about is never let through: unknown means REVIEW.
           </p>
           <div className="mt-6">
@@ -43,7 +43,7 @@ export function PolicyReceiptSection() {
         </ScrollReveal>
         <ScrollReveal delay={0.1} className="flex flex-col items-center">
           <ReceiptSlip />
-          <p className="mt-6 max-w-[360px] text-center text-[15px] leading-relaxed text-ink/60">
+          <p className="mt-6 max-w-[360px] text-center text-[15px] leading-relaxed text-ink/65">
             The answer is half of it. The receipt names the payment, the rules and the decision, and carries a signature your own code can verify, or send to <span className="font-mono text-[14px]">/api/v1/receipts/verify</span>.
           </p>
         </ScrollReveal>

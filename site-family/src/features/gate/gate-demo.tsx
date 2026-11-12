@@ -74,19 +74,19 @@ export function GateDemo() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <form className="rounded-2xl bg-white p-5 shadow-sm" onSubmit={(e) => e.preventDefault()} aria-label="Payment request">
-        <p className="text-[13px] font-medium text-ink/50">Payment request · change any line</p>
+        <p className="text-[13px] font-medium text-ink/65">Payment request · change any line</p>
         <label className="mt-4 flex items-center gap-4 text-[15px]">
-          <span className="w-24 shrink-0 text-ink/60">Your limit</span>
+          <span className="w-24 shrink-0 text-ink/65">Your limit</span>
           <input type="range" min={0.01} max={1} step={0.01} value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="w-full accent-ink" />
           <output className="w-14 text-right font-mono">${limit.toFixed(2)}</output>
         </label>
         <label className="mt-3 flex items-center gap-4 text-[15px]">
-          <span className="w-24 shrink-0 text-ink/60">Amount</span>
+          <span className="w-24 shrink-0 text-ink/65">Amount</span>
           <input type="range" min={0.01} max={2} step={0.01} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full accent-ink" />
           <output className="w-14 text-right font-mono">${amount.toFixed(2)}</output>
         </label>
         <label className="mt-4 block text-[15px]">
-          <span className="text-ink/60">Pay to</span>
+          <span className="text-ink/65">Pay to</span>
           <select value={payee} onChange={(e) => setPayee(e.target.value as Payee)} className="mt-1.5 min-h-11 w-full rounded-xl bg-panel px-3">
             <option value="known">A vendor on your list</option>
             <option value="new">A vendor you have never paid</option>
@@ -94,7 +94,7 @@ export function GateDemo() {
           </select>
         </label>
         <label className="mt-4 block text-[15px]">
-          <span className="text-ink/60">What it buys</span>
+          <span className="text-ink/65">What it buys</span>
           <select value={buy} onChange={(e) => setBuy(e.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl bg-panel px-3">
             {BUY_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -102,7 +102,7 @@ export function GateDemo() {
               </option>
             ))}
           </select>
-          {buy !== 'none' && buy !== UNSEEN && <span className="mt-1.5 block text-[12.5px] text-ink/45">Real facts, read from Robinhood Chain on {SAMPLE_DAY}.</span>}
+          {buy !== 'none' && buy !== UNSEEN && <span className="mt-1.5 block text-[12.5px] text-ink/65">Real facts, read from Robinhood Chain on {SAMPLE_DAY}.</span>}
         </label>
         {[
           ['Ethereum USDC instead of USDG on Robinhood Chain', wrongChain, setWrongChain],
@@ -119,7 +119,7 @@ export function GateDemo() {
       <div className="flex flex-col rounded-2xl bg-white p-5 shadow-sm" aria-live="polite">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[13px] font-medium text-ink/50">The gate answers</p>
+            <p className="text-[13px] font-medium text-ink/65">The gate answers</p>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.p
                 key={res.verdict}
@@ -149,18 +149,18 @@ export function GateDemo() {
           </AnimatePresence>
         </div>
         <ul className="mt-4 flex-1 divide-y divide-hair border-y border-hair text-[14px]">
-          {res.reasons.length === 0 && <li className="py-2.5 text-ink/50">No rule fired. Safe to sign.</li>}
+          {res.reasons.length === 0 && <li className="py-2.5 text-ink/65">No rule fired. Safe to sign.</li>}
           {res.reasons.map((code) => (
             <li key={code} className="grid gap-1 py-2.5 sm:grid-cols-[190px_1fr] sm:gap-3">
               <code className="font-mono text-[13px] text-ink">{code}</code>
-              <span className="text-ink/60">{PLAIN[code]}</span>
+              <span className="text-ink/65">{PLAIN[code]}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-4 flex items-baseline justify-between gap-3 text-[13px] text-ink/50">
+        <p className="mt-4 flex items-baseline justify-between gap-3 text-[13px] text-ink/65">
           Receipt <code className="font-mono text-[17px] text-ink">{receipt}</code>
         </p>
-        <p className="mt-1 text-[12.5px] text-ink/45">First 8 hex of sha256 of the request and the answer. Nothing leaves your browser.</p>
+        <p className="mt-1 text-[12.5px] text-ink/65">First 8 hex of sha256 of the request and the answer. Nothing leaves your browser.</p>
       </div>
     </div>
   )

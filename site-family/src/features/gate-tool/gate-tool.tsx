@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import samples from '@data/sample-tokens.json'
 import { cn } from '@/lib/utils'
 import { GateError, NETWORK, USDG, isAddress, runGate, toBaseUnits, type GateAnswer, type GateFailure } from './gate-api'
 import { GateResult } from './gate-result'
+import { GateStage } from './gate-stage'
 
 const EXAMPLES = [{ label: 'USDG', address: USDG }, ...samples.tokens.map((t) => ({ label: t.ticker, address: t.token }))]
 
@@ -40,6 +41,12 @@ export function GateTool() {
     if (run.phase === 'done' || run.phase === 'error') resultRef.current?.focus()
   }, [run])
 
+  const stageInput = useMemo(() => ({ amount, payTo, resourceUrl, valid, token, known }), [amount, payTo, resourceUrl, valid, token, known])
+  // A signed answer belongs to the payment that was run: change the payment and the stage goes back to the preview.
+  useEffect(() => {
+    setRun((r) => (r.phase === 'done' || r.phase === 'error' ? { phase: 'idle' } : r))
+  }, [stageInput])
+
   const errors = {
     amount: toBaseUnits(amount) ? null : 'Use a number above zero with at most 6 decimals, like 0.01.',
     payTo: isAddress(payTo.trim()) ? null : 'An address starts with 0x and has 40 more characters.',
@@ -74,7 +81,7 @@ export function GateTool() {
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
       <form onSubmit={submit} noValidate aria-label="Payment request" className="min-w-0">
         <h2 className="text-[22px] font-semibold">The payment</h2>
-        <p className="mt-1 text-[15px] text-ink/60">What your agent is about to pay. The gate checks it before any money moves.</p>
+        <p className="mt-1 text-[15px] text-ink/65">What your agent is about to pay. The gate checks it before any money moves.</p>
 
         <div className="mt-5">
           <label htmlFor="g-amount" className="block text-[15px] font-medium">Amount in USDG</label>
@@ -99,22 +106,22 @@ export function GateTool() {
 
         <dl className="mt-5 divide-y divide-hair border-y border-hair text-[14px]">
           <div className="flex flex-wrap justify-between gap-x-4 py-2">
-            <dt className="text-ink/60">Network</dt>
+            <dt className="text-ink/65">Network</dt>
             <dd className="font-mono">{NETWORK} (Robinhood Chain)</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-x-4 py-2">
-            <dt className="text-ink/60">Token paid</dt>
+            <dt className="text-ink/65">Token paid</dt>
             <dd className="min-w-0 break-all font-mono">USDG, {USDG.slice(0, 8)}…{USDG.slice(-4)}</dd>
           </div>
         </dl>
 
         <h2 className="mt-8 text-[22px] font-semibold">What it buys</h2>
         <div className="mt-3">
-          <label htmlFor="g-token" className="block text-[15px] font-medium">Token address <span className="font-normal text-ink/60">(optional)</span></label>
+          <label htmlFor="g-token" className="block text-[15px] font-medium">Token address <span className="font-normal text-ink/65">(optional)</span></label>
           <input id="g-token" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="0x…" value={token} onChange={(e) => setToken(e.target.value)} aria-invalid={!!show('token')} aria-describedby={show('token') ? 'g-token-e' : undefined} className={cn(field, 'font-mono text-[14px]')} />
           {err('g-token-e', 'token')}
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[14px]">
-            <span className="text-ink/60">Fill in:</span>
+            <span className="text-ink/65">Fill in:</span>
             {EXAMPLES.map((ex) => (
               <button key={ex.address} type="button" onClick={() => setToken(ex.address)} title={ex.address} aria-pressed={token.toLowerCase() === ex.address.toLowerCase()} className="min-h-10 rounded-full border border-hair px-4 font-mono text-[13px] outline-none transition-colors hover:bg-panel focus-visible:ring-2 focus-visible:ring-ink aria-pressed:border-ink">
                 {ex.label}
@@ -129,7 +136,7 @@ export function GateTool() {
         </div>
 
         <h2 className="mt-8 text-[22px] font-semibold">Your rules</h2>
-        <p className="mt-1 text-[15px] text-ink/60">Policy <code className="font-mono text-[14px] text-ink">reinkeep-default-v1</code>: $0.10 per payment, $1 a day, https only.</p>
+        <p className="mt-1 text-[15px] text-ink/65">Policy <code className="font-mono text-[14px] text-ink">reinkeep-default-v1</code>: $0.10 per payment, $1 a day, https only.</p>
         <label className="mt-3 flex min-h-11 cursor-pointer items-start gap-3 text-[15px]">
           <input type="checkbox" checked={known} onChange={(e) => setKnown(e.target.checked)} className="mt-1 size-5 shrink-0 accent-ink" />
           <span>I already know this payee. Without this, a first payment to a new address waits for a human.</span>
@@ -138,20 +145,13 @@ export function GateTool() {
         <button type="submit" disabled={loading} className="mt-6 min-h-12 w-full rounded-full bg-ink px-6 text-[15px] font-medium text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 active:scale-[0.97] disabled:opacity-60 sm:w-auto">
           {loading ? 'Running the gate…' : 'Run the Gate'}
         </button>
-        <p className="mt-3 text-[13px] text-ink/60">25 free checks a day from your connection. Rules decide; AI only explains. Not audited.</p>
+        <p className="mt-3 text-[13px] text-ink/65">25 free checks a day from your connection. Rules decide; AI only explains. Team-reviewed, no outside audit yet.</p>
       </form>
 
       <div ref={resultRef} tabIndex={-1} aria-live="polite" aria-busy={loading} className="min-w-0 outline-none lg:sticky lg:top-24">
-        {run.phase === 'idle' && (
-          <div className="rounded-2xl bg-panel p-6">
-            <img src="/assets/keep-calm.webp" alt="" width={120} height={120} className="size-24" />
-            <p className="mt-3 text-[17px] font-medium">Keep is waiting at the gate.</p>
-            <p className="mt-1 text-[15px] text-ink/60">Change the payment if you like, then run it. You get the answer, every rule that decided it, and a signed receipt.</p>
-          </div>
-        )}
-        {loading && <p className="rounded-2xl bg-panel p-6 text-[15px] text-ink/70">Asking the gate…</p>}
+        <GateStage input={stageInput} answer={run.phase === 'done' ? run.answer : null} loading={loading} />
         {run.phase === 'error' && (
-          <div role="status" className="rounded-2xl bg-panel p-6 text-[15px] text-ink/80">
+          <div role="status" className="mt-4 rounded-2xl bg-panel p-6 text-[15px] text-ink/80">
             {run.failure.kind === 'limit' ? (
               <>
                 <p>Today’s 25 free checks from this connection are used. Agents pay $0.01 in USDG per check over x402.</p>
@@ -164,7 +164,7 @@ export function GateTool() {
             )}
           </div>
         )}
-        {run.phase === 'done' && <GateResult answer={run.answer} freeLeft={run.freeLeft} />}
+        {run.phase === 'done' && <div className="mt-4"><GateResult answer={run.answer} freeLeft={run.freeLeft} /></div>}
       </div>
     </div>
   )

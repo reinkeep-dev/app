@@ -10,7 +10,7 @@ export function PageHero({ kicker, tone, title, text, image, children }: { kicke
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.2, 0.7, 0.1, 1] }}>
         <p className={`text-[14px] font-semibold ${tone}`}>{kicker}</p>
         <h1 className="mt-3 text-[40px] font-semibold leading-[1.05] sm:text-[52px]">{title}</h1>
-        <p className="mt-4 max-w-[520px] text-[17px] leading-relaxed text-ink/60">{text}</p>
+        <p className="mt-4 max-w-[520px] text-[17px] leading-relaxed text-ink/65">{text}</p>
         {children}
       </motion.div>
       <div aria-hidden="true" className="hidden aspect-[4/3] w-full items-center justify-center rounded-2xl bg-panel sm:flex">

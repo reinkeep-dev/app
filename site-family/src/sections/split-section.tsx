@@ -29,7 +29,7 @@ export function SplitSection({
         <ScrollReveal delay={0.08}>
           <p className={cn('text-[14px] font-semibold', tone)}>{label}</p>
           <h2 className="mt-3 text-[34px] font-semibold leading-[1.08] sm:text-[42px]">{title}</h2>
-          <p className="mt-4 max-w-[420px] text-[17px] leading-relaxed text-ink/60">{text}</p>
+          <p className="mt-4 max-w-[420px] text-[17px] leading-relaxed text-ink/65">{text}</p>
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {ticks.map((t) => (
               <li key={t} className={cn('flex items-center gap-2.5 text-[15px] font-medium', tone)}>

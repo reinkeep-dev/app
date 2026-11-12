@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { ScrollReveal } from '@/components/scroll-reveal'
+import { PremortemStage } from './premortem-stage'
 import { PremortemError, runPremortem, type Draft, type PremortemAnswer, type PremortemFailure, type Severity } from './premortem-api'
 
 const TONE = { ALLOW: 'text-allow', REVIEW: 'text-review', BLOCK: 'text-block' } as const
-const SEVERITY_TONE: Record<Severity, string> = { high: 'text-block', medium: 'text-review', low: 'text-ink/60' }
+const SEVERITY_TONE: Record<Severity, string> = { high: 'text-block', medium: 'text-review', low: 'text-ink/65' }
 const ERRORS: Record<PremortemFailure, string> = {
   limit: 'You used today’s 60 pre-mortems. Come back tomorrow.',
   not_live: 'The pre-mortem goes live with the next update of the gate.',
@@ -91,7 +92,7 @@ export function PremortemTool() {
               {NUMBERS.map(([k, label, unit]) => (
                 <div key={k}>
                   <label htmlFor={`pm-${k}`} className="block text-[14px] text-ink/70">
-                    {label} <span className="text-ink/45">({unit})</span>
+                    {label} <span className="text-ink/65">({unit})</span>
                   </label>
                   <input id={`pm-${k}`} inputMode="decimal" className={cn(field, 'mt-1 font-mono', badNumber?.[0] === k && 'ring-block')} value={nums[k]} onChange={(e) => setNums({ ...nums, [k]: e.target.value })} />
                 </div>
@@ -103,12 +104,14 @@ export function PremortemTool() {
             <button type="submit" disabled={loading || badTicker || !!badNumber} className="min-h-12 rounded-full bg-ink px-6 text-[15px] font-medium text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 active:scale-[0.97] disabled:opacity-50">
               {loading ? 'Reading the draft…' : 'Run the pre-mortem'}
             </button>
-            <p className="mt-3 text-[13px] text-ink/60">Free, 60 a day. Nothing you type is stored.</p>
+            <p className="mt-3 text-[13px] text-ink/65">Free, 60 a day. Nothing you type is stored.</p>
           </div>
         </form>
       </ScrollReveal>
 
-      <div className="mt-10" aria-live="polite" aria-busy={loading}>
+      <div className="mt-10 max-w-[1040px]" aria-live="polite" aria-busy={loading}>
+        {state.phase !== 'error' && <PremortemStage answer={state.phase === 'done' ? state.answer : null} loading={loading} />}
+        <div className="mt-6" />
         {state.phase === 'error' && (
           <p role="status" className="max-w-[760px] rounded-2xl bg-panel p-5 text-[15px] text-ink/80">
             {ERRORS[state.kind]} {state.detail}
@@ -123,7 +126,7 @@ export function PremortemTool() {
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="mt-6">
-      <h3 className="text-[13px] font-medium text-ink/60">{title}</h3>
+      <h3 className="text-[13px] font-medium text-ink/65">{title}</h3>
       {children}
     </div>
   )
@@ -133,20 +136,20 @@ function PremortemReport({ answer }: { answer: PremortemAnswer }) {
   const { gate, risks, ticker, cohort } = answer
   return (
     <motion.div className="max-w-[760px] rounded-2xl border border-hair bg-white p-5 shadow-sm" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.2, 0.7, 0.1, 1] }}>
-      <p className="text-[13px] font-medium text-ink/60">{answer.draft.ticker} · Agents buying it would get</p>
+      <p className="text-[13px] font-medium text-ink/65">{answer.draft.ticker} · Agents buying it would get</p>
       <p className={cn('mt-1 text-[48px] font-semibold leading-none tracking-tight min-[400px]:text-[64px]', TONE[gate.decision])}>{gate.decision}</p>
 
       <Block title={`Risks, worst first (${risks.length})`}>
         <ul className="mt-1 divide-y divide-hair border-y border-hair text-[14px]">
-          {risks.length === 0 && <li className="py-3 text-ink/60">None of our rules found a risk in this draft.</li>}
+          {risks.length === 0 && <li className="py-3 text-ink/65">None of our rules found a risk in this draft.</li>}
           {risks.map((r) => (
             <li key={r.code} className="py-3">
               <p>
                 <span className={cn('font-semibold capitalize', SEVERITY_TONE[r.severity])}>{r.severity}</span>
-                <span className="text-ink/45"> · {r.basis}</span>
+                <span className="text-ink/65"> · {r.basis}</span>
               </p>
               <p className="mt-1 text-ink/80">{r.plain}</p>
-              {r.fix && <p className="mt-1 text-ink/60">Fix: {r.fix}</p>}
+              {r.fix && <p className="mt-1 text-ink/65">Fix: {r.fix}</p>}
             </li>
           ))}
         </ul>

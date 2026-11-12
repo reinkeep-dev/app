@@ -43,18 +43,18 @@ export function DecisionFeed() {
               <span className={cn('size-2.5 shrink-0 rounded-full', st.dot)} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] font-medium">{s.what}</p>
-                <p className="truncate font-mono text-[12px] text-ink/45">{s.reasons[0] ?? 'no rule fired'}</p>
+                <p className="truncate font-mono text-[12px] text-ink/65">{s.reasons[0] ?? 'no rule fired'}</p>
               </div>
               <div className="text-right">
                 <p className={cn('text-[13px] font-semibold', st.text)}>{st.word}</p>
-                <p className="font-mono text-[12px] text-ink/50">${s.usd.toFixed(s.usd < 0.01 ? 3 : 2)}</p>
+                <p className="font-mono text-[12px] text-ink/65">${s.usd.toFixed(s.usd < 0.01 ? 3 : 2)}</p>
               </div>
             </div>
           )
         })}
       </AnimatedList>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-panel" />
-      <p className="absolute left-0 top-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-ink/50">Sample requests</p>
+      <p className="absolute left-0 top-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-ink/65">Sample requests</p>
     </div>
   )
 }
