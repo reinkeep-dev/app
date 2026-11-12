@@ -7,8 +7,8 @@
 // address (the payer the facilitator reports, else the signed authorization's `from`), or anyone could name a whale's
 // wallet and pay half. A failed balance read is "not a holder": full price, never a guess.
 //
-// Not built: paying in the Reinkeep token at half price with those tokens burned (Actuary's Permit2 flow). That needs
-// the launched token's contract (does it support signed transfers?) and a facilitator that settles it.
+// Anyone can check a wallet first: GET /api/v1/gate/holder?address=0x... (same as Actuary's).
+// Paying a mandate in the token at half price, burned, is token-burn.ts.
 import { encodeFunctionData, parseAbi } from "viem";
 import type { RpcClient } from "../../collector/src/contract-facts.ts";
 
@@ -35,18 +35,27 @@ export const holderAmount = (amount: string): string => String((BigInt(amount) *
 
 const BALANCE_OF = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 
-// true when the balance is at least the minimum; false when lower, or when the read failed or made no sense.
-export function holderCheck(rpc: RpcClient, cfg: HolderConfig): (address: string) => Promise<boolean> {
+// The token balance in base units, read live; null when the read failed or made no sense.
+export function holderBalance(rpc: RpcClient, cfg: HolderConfig): (address: string) => Promise<bigint | null> {
   return async (address) => {
     try {
       const data = encodeFunctionData({ abi: BALANCE_OF, functionName: "balanceOf", args: [address as `0x${string}`] });
       const [r] = await rpc.batch([{ method: "eth_call", params: [{ to: cfg.token, data }, "latest"] }]);
-      if (!r.ok || typeof r.value !== "string" || !/^0x[0-9a-fA-F]{1,64}$/.test(r.value)) return false;
-      return BigInt(r.value) >= cfg.minBalance;
+      if (!r.ok || typeof r.value !== "string" || !/^0x[0-9a-fA-F]{1,64}$/.test(r.value)) return null;
+      return BigInt(r.value);
     } catch (err) {
       console.error("holder balance read failed", err instanceof Error ? err.message : "unknown");
-      return false;
+      return null;
     }
+  };
+}
+
+// true when the balance is at least the minimum; false when lower, or when the read failed or made no sense.
+export function holderCheck(rpc: RpcClient, cfg: HolderConfig): (address: string) => Promise<boolean> {
+  const balance = holderBalance(rpc, cfg);
+  return async (address) => {
+    const b = await balance(address);
+    return b !== null && b >= cfg.minBalance;
   };
 }
 

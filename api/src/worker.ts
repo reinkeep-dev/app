@@ -6,6 +6,8 @@
 // both judged against an empty history. Everything else (no payer, presets, receipts) is answered right here.
 // Metering (metering.ts): POST /api/v1/gate has 25 free calls per IP per day (FreeTier Durable Object), then x402 pay-per-call;
 // POST /api/v1/gate/x402 is always paid. Env: X402_PAY_TO, PRIORS_API_KEY (secret), FACILITATOR_URL (optional), FREE.
+// After the token launches: HOLDER_TOKEN + HOLDER_MIN (holder price, holder.ts), BURN_TOKEN + BURN_AMOUNT + BURNER_KEY
+// (secret; mandates paid in the token at half price and burned, token-burn.ts).
 // Remote MCP (mcp.ts): POST /mcp, stateless JSON-RPC; its tools call the metered REST API above.
 // Explanation: every gate answer carries `explanation` (explain.ts), written by Workers AI (binding AI) or built from the rules.
 // Receipts: every signed gate answer is also saved in D1 (receipt-store.ts, best effort via ctx.waitUntil); GET /r/{id} shows
@@ -18,7 +20,8 @@ import { createRpcClient } from "../../collector/src/contract-facts.ts";
 import { D1CollectorStore } from "../../collector/src/d1-store.ts";
 import { aiExplainer, type AiRunner } from "./explain.ts";
 import { aiJudge } from "./judge.ts";
-import { holderCheck, holderConfig } from "./holder.ts";
+import { holderBalance, holderCheck, holderConfig } from "./holder.ts";
+import { burnConfig, createTokenBurn } from "./token-burn.ts";
 import { StorageGateStore, type GateStore, type LedgerStorage } from "./gate-store.ts";
 import { createHandler, peekPayer, type RunContext } from "./http-handler.ts";
 import { D1ReceiptStore } from "./receipt-store.ts";
@@ -110,9 +113,16 @@ export function makeWorker(fetchImpl: typeof fetch = (i, init) => fetch(i, init)
         isMandateRoute(new URL(x.url).pathname.replace(/\/+$/, ""))
           ? handleMandates(x, { ns: env.MANDATES, signer: privateKeyToAccount(key as `0x${string}`).address, now: Date.now })
           : routeGate(x, env, key, run);
+      const rpc = chainRpc(env);
       const holderCfg = holderConfig(env);
-      const isHolder = holderCfg ? holderCheck(chainRpc(env), holderCfg) : undefined;
-      const api = async (r: Request): Promise<Response> => (await meter(r, env, { route, fetch: fetchImpl, sleep, isHolder })) ?? route(r);
+      const isHolder = holderCfg ? holderCheck(rpc, holderCfg) : undefined;
+      const balanceOf = holderCfg ? holderBalance(rpc, holderCfg) : undefined;
+      // Pay-in-token for mandates (token-burn.ts). The burner must be its own wallet: never the receipt signer.
+      const burnCfg = burnConfig(env);
+      const sameAsSigner = burnCfg !== null && burnCfg.account.address === privateKeyToAccount(key as `0x${string}`).address;
+      if (sameAsSigner) console.error("BURNER_KEY is the receipt signer key: token payments stay off until it is a separate wallet");
+      const burn = burnCfg && !sameAsSigner ? createTokenBurn(rpc, burnCfg, { sleep }) : undefined;
+      const api = async (r: Request): Promise<Response> => (await meter(r, env, { route, fetch: fetchImpl, sleep, isHolder, holderBalance: balanceOf, burn })) ?? route(r);
       if (new URL(req.url).pathname.replace(/\/+$/, "") === "/mcp") return handleMcp(req, api);
       return api(req);
     },

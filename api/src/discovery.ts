@@ -142,7 +142,8 @@ ${ruleLines("buys")}
 - After that, $${PRICE_USD.toFixed(2)} per call (${PRICE_AMOUNT} base units of USDG ${USDG}, 6 decimals) via x402 v${X402_VERSION}, scheme exact, network ${NETWORK}, facilitator ${DEFAULT_FACILITATOR} (Priors).
 - POST ${API}/gate/x402 is always paid, no free tier.
 - A call without a PAYMENT-SIGNATURE header gets 402 with the x402 body, and the same JSON base64-encoded in a PAYMENT-REQUIRED header. Sign what it asks for, retry with the base64 payload in PAYMENT-SIGNATURE. Settlement happens only after the gate answered 200; a successful answer carries a PAYMENT-RESPONSE header.
-- Holder price (off until the Reinkeep token launches; GET ${API}/gate/pricing shows \`holder: null\` until then): send header \`x-holder: <your address>\` and, if that wallet holds at least \`holder.minBalance\` of \`holder.token\` (read live), the 402 asks for half. The payment must come from that same wallet, or it is refused with a full-price 402 before anything runs or settles.
+- Holder price (off until the Reinkeep token launches; GET ${API}/gate/pricing shows \`holder: null\` until then): send header \`x-holder: <your address>\` and, if that wallet holds at least \`holder.minBalance\` of \`holder.token\` (read live), the 402 asks for half. The payment must come from that same wallet, or it is refused with a full-price 402 before anything runs or settles. Check a wallet: GET ${API}/gate/holder?address=0x...
+- Mandates paid in the Reinkeep token (off until launch; pricing shows \`tokenBurn: null\` until then): the mandate 402 carries \`token_option\` (scheme reinkeep-permit2, payTo 0x...dEaD). Approve Permit2 once, sign a PermitTransferFrom for that token and amount with \`extra.spender\` as spender, deadline at most 120 s away, and resend with PAYMENT-SIGNATURE {x402Version:2, accepted: token_option, payload:{owner, permit:{permitted:{token,amount}, nonce, deadline}, signature}}. Half price; the tokens are burned.
 - Presets, receipts, pricing and status are free and unlimited.
 - Live numbers: GET ${API}/gate/pricing
 
@@ -603,6 +604,10 @@ export function openApi() {
             holder: {
               description: "Holder price; null until the Reinkeep token is launched and configured",
               oneOf: [{ type: "null" }, { type: "object", properties: { token: addr("Reinkeep token"), minBalance: str({ description: "Base units" }), discountPct: { type: "integer" }, amount: str({ description: "One call at the holder price, base units" }), header: { const: "x-holder" } } }],
+            },
+            tokenBurn: {
+              description: "Mandates paid in the Reinkeep token at half price, burned; null until launched and configured",
+              oneOf: [{ type: "null" }, { type: "object", properties: { appliesTo: { const: "mandates" }, token: addr("Reinkeep token"), amount: str({ description: "Base units per mandate" }), discountPct: { type: "integer" }, payTo: addr("Dead address"), permit2: addr("Permit2"), spender: addr("Our burner wallet") } }],
             },
           },
         },

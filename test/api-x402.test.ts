@@ -244,7 +244,7 @@ test("missing config: free tier works, past it 503 payment_not_configured (never
 test("GET /gate/pricing", async () => {
   const s = setup();
   const r = await s.send("/api/v1/gate/pricing", { method: "GET" });
-  assert.deepEqual(r.data, { freeCallsPerDay: 25, priceUsd: 0.01, amount: "10000", asset: USDG, network: "eip155:4663", payTo: OWNER, facilitator: "https://facilitator.priors.trade", holder: null });
+  assert.deepEqual(r.data, { freeCallsPerDay: 25, priceUsd: 0.01, amount: "10000", asset: USDG, network: "eip155:4663", payTo: OWNER, facilitator: "https://facilitator.priors.trade", holder: null, tokenBurn: null });
   const bare = setup({});
   const n = await bare.send("/api/v1/gate/pricing", { method: "GET" });
   assert.equal(n.data.payTo, null);

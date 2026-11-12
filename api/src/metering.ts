@@ -9,13 +9,14 @@ import { batchSize } from "./request-validation.ts";
 import { isMandatePurchase } from "./mandate-routes.ts";
 import { MANDATE_CALLS } from "./mandate-service.ts";
 import { HOLDER_DISCOUNT_PCT, HOLDER_HEADER, claimedHolder, holderAmount, holderConfig, payerOf } from "./holder.ts";
+import { BURN_DISCOUNT_PCT, DEAD, PERMIT2, burnConfig, isBurnPayload, type BurnEnv, type BurnOffer, type TokenBurn } from "./token-burn.ts";
 import {
   DATA_CALLS_PER_DAY, DEFAULT_FACILITATOR, FREE_CALLS_PER_DAY, FacilitatorUnavailable, NETWORK, PREMORTEM_CALLS_PER_DAY, PRICE_AMOUNT, PRICE_USD, USDG, VERDICT_CALLS_PER_DAY,
   checkPayload, createFacilitator, fromBase64, paymentRequired, requirementsFor, toBase64, type Facilitator, type Requirements,
 } from "./x402.ts";
 
 type Stub = { fetch(req: Request): Promise<Response> };
-export type MeterEnv = {
+export type MeterEnv = BurnEnv & {
   FREE?: { idFromName(name: string): unknown; get(id: unknown): Stub };
   X402_PAY_TO?: string;
   PRIORS_API_KEY?: string;
@@ -47,7 +48,15 @@ export function pricing(env: MeterEnv): Response {
     freeCallsPerDay: FREE_CALLS_PER_DAY, priceUsd: PRICE_USD, amount: PRICE_AMOUNT, asset: USDG, network: NETWORK,
     payTo: ADDRESS.test(env.X402_PAY_TO ?? "") ? env.X402_PAY_TO : null, facilitator: env.FACILITATOR_URL || DEFAULT_FACILITATOR,
     holder: holderPricing(env),
+    tokenBurn: burnPricing(env),
   });
+}
+
+// null until the token is launched and BURN_TOKEN / BURN_AMOUNT / BURNER_KEY are set. Mandates only.
+function burnPricing(env: MeterEnv) {
+  const cfg = burnConfig(env);
+  if (!cfg) return null;
+  return { appliesTo: "mandates", token: cfg.token, amount: cfg.amount, discountPct: BURN_DISCOUNT_PCT, payTo: DEAD, permit2: PERMIT2, spender: cfg.account.address };
 }
 
 // null until the token is launched and HOLDER_TOKEN / HOLDER_MIN are set.
@@ -57,8 +66,10 @@ function holderPricing(env: MeterEnv) {
   return { token: cfg.token, minBalance: String(cfg.minBalance), discountPct: HOLDER_DISCOUNT_PCT, amount: holderAmount(PRICE_AMOUNT), header: HOLDER_HEADER };
 }
 
-function payment402(url: string, requirements: Requirements, error: string): Response {
-  const body = paymentRequired(url, requirements, error);
+// `tokenOption` (mandates, once the token is live): pay half in the Reinkeep token, burned. Same field name as Actuary's.
+function payment402(url: string, requirements: Requirements | null, error: string, tokenOption?: BurnOffer): Response {
+  const base = paymentRequired(url, requirements, error);
+  const body = tokenOption ? { ...base, token_option: tokenOption } : base;
   return withHeaders(json(402, body), { "payment-required": toBase64(body) });
 }
 
@@ -72,11 +83,17 @@ export async function meter(
     sleep?: (ms: number) => Promise<void>;
     // Reads the holder's balance (holder.ts holderCheck). Absent, or HOLDER_TOKEN unset: no holder price.
     isHolder?: (address: string) => Promise<boolean>;
+    // The raw balance, for GET /api/v1/gate/holder?address=. Absent when the holder price is off.
+    holderBalance?: (address: string) => Promise<bigint | null>;
+    // Pay-in-token for mandates (token-burn.ts). Absent until BURN_TOKEN / BURN_AMOUNT / BURNER_KEY are set.
+    burn?: TokenBurn;
+    now?: () => number;
   },
 ): Promise<Response | null> {
   const path = new URL(req.url).pathname.replace(/\/+$/, "");
   if (req.method === "GET" && path === GATE + "/pricing") return pricing(env);
   const ip = (req.headers.get("cf-connecting-ip") ?? "").trim() || "unknown";
+  if (req.method === "GET" && path === GATE + "/holder") return holderLookup(req, ip, env, deps.holderBalance);
   if (req.method === "GET" && path.startsWith(VERDICT)) return meterVerdict(req, path.slice(VERDICT.length), ip, env, deps.route);
   if (req.method === "GET" && (DATA_PATHS.has(path) || path.startsWith(AUTOPSY))) {
     return meterLimited(req, ip, env, deps.route, {
@@ -139,21 +156,25 @@ export async function meter(
   // Free calls used up (or this is the paid-only route, or no free tier is bound in this environment).
   if (!paidOnly && !env.FREE) return deps.route(req);
 
-  if (!payOk(env)) return fail(503, "payment_not_configured", "Paid calls are not set up on this server yet.");
+  // Mandates can also be paid in the Reinkeep token at half price, burned (token-burn.ts), once that is switched on.
+  const burn = mandate ? deps.burn : undefined;
+  if (!payOk(env) && !burn) return fail(503, "payment_not_configured", "Paid calls are not set up on this server yet.");
   const full = String(BigInt(PRICE_AMOUNT) * BigInt(units));
   // Holder price: the claimed wallet's balance is read live on every quote, so the quote and the paid retry agree.
   const claimed = claimedHolder(req);
   const holder = claimed && holderConfig(env) && deps.isHolder ? ((await deps.isHolder(claimed)) ? claimed : null) : null;
-  const requirements = requirementsFor(env.X402_PAY_TO!, holder ? holderAmount(full) : full);
+  const requirements = payOk(env) ? requirementsFor(env.X402_PAY_TO!, holder ? holderAmount(full) : full) : null;
   const header = req.headers.get("payment-signature");
   if (!header) {
     const what = mandate ? `a mandate (${units} calls)` : `${units} tokens`;
-    return payment402(req.url, requirements, paidOnly ? "Payment required." : units > 1 ? `Not enough of the ${FREE_CALLS_PER_DAY} free calls for today are left for ${what}. Payment required.` : `The ${FREE_CALLS_PER_DAY} free calls for today are used. Payment required.`);
+    return payment402(req.url, requirements, paidOnly ? "Payment required." : units > 1 ? `Not enough of the ${FREE_CALLS_PER_DAY} free calls for today are left for ${what}. Payment required.` : `The ${FREE_CALLS_PER_DAY} free calls for today are used. Payment required.`, burn?.offer);
   }
 
   const payload = fromBase64(header);
+  if (burn && isBurnPayload(payload)) return payWithBurn(req, payload, burn, requirements, deps.route, deps.now ?? Date.now);
+  if (!requirements) return payment402(req.url, null, "This server takes the token option only for now.", burn?.offer);
   const problem = checkPayload(payload, requirements);
-  if (problem) return payment402(req.url, requirements, problem);
+  if (problem) return payment402(req.url, requirements, problem, burn?.offer);
 
   const facilitator: Facilitator = createFacilitator({ url: env.FACILITATOR_URL || DEFAULT_FACILITATOR, apiKey: env.PRIORS_API_KEY!, fetch: deps.fetch });
   const unavailable = () => fail(502, "payment_unavailable", "The payment service could not be reached. Nothing was charged.");
@@ -190,6 +211,25 @@ export async function meter(
   }
 }
 
+// The token option: check the signed permit, dry-run the burn on chain (nothing is taken if it would fail), run the
+// mandate, then burn. Same order as the USDG path (verify, run, settle): a caller mistake costs the buyer nothing.
+async function payWithBurn(
+  req: Request, payload: unknown, burn: TokenBurn, requirements: Requirements | null, route: (req: Request) => Promise<Response>, now: () => number,
+): Promise<Response> {
+  const again = (msg: string) => payment402(req.url, requirements, msg, burn.offer);
+  const permit = await burn.check(payload, now());
+  if (typeof permit === "string") return again(`Token payment not valid: ${permit}.`);
+  const problem = await burn.simulate(permit);
+  if (problem) return again(`Token payment ${problem}. Nothing was taken.`);
+  const res = await route(req);
+  if (!res.ok) return res;
+  const sent = await burn.send(permit);
+  if (!sent.ok) return again(`Token payment failed: ${sent.reason}.`);
+  return withHeaders(res, {
+    "payment-response": toBase64({ success: true, transaction: sent.transaction, network: NETWORK, payer: permit.owner.toLowerCase(), burned: { asset: burn.offer.asset, amount: burn.offer.amount, to: DEAD } }),
+  });
+}
+
 // Free but limited tools: each has its own per-IP daily counter (a FreeTier object named "<name>:" + ip). A slot is
 // given back unless the tool answered 2xx, so a bad request costs nothing.
 type Limited = { name: string; limit: number; code: string; message: string };
@@ -201,6 +241,27 @@ async function meterLimited(req: Request, ip: string, env: MeterEnv, route: (req
   const res = await route(req);
   if (!res.ok) await counter.fetch(new Request("https://free/refund", { method: "POST" }));
   return res;
+}
+
+// GET /api/v1/gate/holder?address=0x...: is this wallet a holder right now? One live balance read, counted with the
+// free launch-data reads (each costs a chain call).
+async function holderLookup(req: Request, ip: string, env: MeterEnv, balanceOf?: (address: string) => Promise<bigint | null>): Promise<Response> {
+  const cfg = holderConfig(env);
+  if (!cfg || !balanceOf) return fail(404, "holder_price_off", "The holder price starts when the Reinkeep token launches.");
+  const address = (new URL(req.url).searchParams.get("address") ?? "").trim();
+  if (!ADDRESS.test(address)) return fail(400, "invalid_address", "Send ?address=0x... with 40 hex characters.");
+  const answer = async () => {
+    const balance = await balanceOf(address);
+    if (balance === null) return fail(502, "chain_unavailable", "The token balance could not be read just now. Try again.");
+    return json(200, {
+      token: cfg.token, network: NETWORK, discountPct: HOLDER_DISCOUNT_PCT, minBalance: String(cfg.minBalance),
+      address: address.toLowerCase(), balance: String(balance), holder: balance >= cfg.minBalance,
+    });
+  };
+  return (await meterLimited(req, ip, env, answer, {
+    name: "data", limit: DATA_CALLS_PER_DAY, code: "data_limit",
+    message: `The ${DATA_CALLS_PER_DAY} free launch-data reads for today are used. Try again tomorrow (UTC).`,
+  })) ?? answer();
 }
 
 // Free token check. The address is checked first, so a typo costs nothing; then one slot of this IP's verdict counter.

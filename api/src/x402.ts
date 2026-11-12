@@ -51,12 +51,13 @@ export function fromBase64(text: string): unknown {
   }
 }
 
-export function paymentRequired(url: string, requirements: Requirements, error: string) {
+// `requirements` is null only when USDG is not set up but another option (the token) is.
+export function paymentRequired(url: string, requirements: Requirements | null, error: string) {
   return {
     x402Version: X402_VERSION,
     error,
     resource: { url, description: "Reinkeep gate: one pre-payment check with a signed receipt", mimeType: "application/json" },
-    accepts: [requirements],
+    accepts: requirements ? [requirements] : [],
   };
 }
 
