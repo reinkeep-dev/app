@@ -16,7 +16,7 @@ import { FreeTier, meter } from "../api/src/metering.ts";
 import { toBase64 } from "../api/src/x402.ts";
 import { makeWorker, PayerLedger } from "../api/src/worker.ts";
 import { MINT, PLAIN_CODE, RPC_URL, codeWith, fakeInternet, type TokenSpec } from "./collector-fixtures.ts";
-import { PAYER, goodRequest, knownPolicy, makeApp } from "./api-fixture.ts";
+import { PAYER, goodRequest, knownPolicy, makeApp, withProof } from "./api-fixture.ts";
 
 const OWNER = "0x1111111111111111111111111111111111111111";
 const SHARE = "https://reinkeep-gate.reinkeep.workers.dev/r/";
@@ -98,6 +98,7 @@ function setup(config: Config = {}) {
   const worker = makeWorker(facilitator, async () => {});
 
   async function send(method: string, path: string, over: { b?: unknown; ip?: string; sig?: unknown } = {}) {
+    if (path === "/api/v1/gate" && over.b && typeof over.b === "object") over = { ...over, b: await withProof(over.b as Record<string, any>, Date.now()) };
     const headers: Record<string, string> = {};
     if (over.b !== undefined) headers["content-type"] = "application/json";
     if (over.ip) headers["cf-connecting-ip"] = over.ip;

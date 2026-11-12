@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { defaultPolicy } from "../engine/policy.ts";
 import { gate as gateService } from "../api/src/gate-service.ts";
-import { goodRequest, knownPolicy, makeApp, PAYER, PAY_TO, T0 } from "./api-fixture.ts";
+import { goodRequest, knownPolicy, makeApp, PAYER, PAYER_B, PAY_TO, T0, withProof } from "./api-fixture.ts";
+import { payerMessage, PROOF_WINDOW_S } from "../api/src/payer-proof.ts";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 const codes = (r: { data: any }): string[] => r.data.reasons.map((x: any) => x.code);
 
@@ -99,7 +101,7 @@ test("with a payer the gate remembers: an identical repeat within 30s is a dupli
   assert.equal(first.data.receipt.body.stateful, true);
   assert.equal(second.data.decision, "BLOCK");
   assert.deepEqual(codes(second), ["duplicate_payment"]);
-  const other = await app.gate(goodRequest(), { policy: knownPolicy, payer: "0x00000000000000000000000000000000000000b2" });
+  const other = await app.gate(goodRequest(), { policy: knownPolicy, payer: PAYER_B });
   assert.equal(other.data.decision, "ALLOW", "another payer has its own history");
 });
 
@@ -194,4 +196,40 @@ test("the service itself ignores a clock smuggled into the request (second layer
   const input = { request: { ...goodRequest(), now: 5 }, policy: defaultPolicy, policyName: "custom" };
   const result = await gateService(input as any, { account: app.account, now: () => T0 });
   assert.equal(result.receipt.issuedAt, Math.floor(T0 / 1000), "the receipt time is the server's, not the caller's");
+});
+
+// H1 from the security audit: a payer's history must only be touched by that payer.
+test("payer proof: no signature is refused, and nothing is written to that payer's history", async () => {
+  const app = makeApp();
+  const r = await app.send("POST", "/api/v1/gate", { request: goodRequest(), policy: knownPolicy, payer: PAYER });
+  assert.equal(r.status, 400);
+  assert.equal(r.data.error.code, "payer_signature_required");
+  const real = await app.gate(goodRequest(), { policy: knownPolicy, payer: PAYER });
+  assert.equal(real.data.decision, "ALLOW", "the refused call left no entry behind, so this is not a duplicate");
+});
+
+test("payer proof: an attacker naming someone else's address with their own signature gets 401 and cannot plant a recipient", async () => {
+  const app = makeApp();
+  const attacker = privateKeyToAccount(generatePrivateKey());
+  const evil = goodRequest({ payTo: attacker.address });
+  const issuedAt = Math.floor(app.clock.now / 1000);
+  const payerSignature = await attacker.signMessage({ message: payerMessage(PAYER, evil, issuedAt) });
+  const r = await app.send("POST", "/api/v1/gate", { request: evil, policy: { allowPayTo: [attacker.address] }, payer: PAYER, payerSignature, issuedAt });
+  assert.equal(r.status, 401);
+  assert.equal(r.data.error.code, "payer_signature_invalid");
+  const victim = await app.gate(goodRequest({ payTo: attacker.address }), { payer: PAYER });
+  assert.deepEqual(victim.data.reasons.map((x: any) => x.code), ["new_recipient"], "the attacker is still a new recipient for the victim");
+});
+
+test("payer proof: a signature for another payment, or an old one, does not count", async () => {
+  const app = makeApp();
+  const signed = await withProof({ request: goodRequest(), policy: knownPolicy, payer: PAYER }, app.clock.now);
+  const swapped = await app.send("POST", "/api/v1/gate", { ...signed, request: goodRequest({ amount: "20000", quotedAmount: "20000" }) });
+  assert.equal(swapped.data.error.code, "payer_signature_invalid");
+  app.clock.now += (PROOF_WINDOW_S + 1) * 1000;
+  const late = await app.send("POST", "/api/v1/gate", signed);
+  assert.equal(late.status, 401);
+  assert.equal(late.data.error.code, "payer_signature_expired");
+  const orphan = await app.send("POST", "/api/v1/gate", { request: goodRequest(), payerSignature: signed.payerSignature, issuedAt: signed.issuedAt });
+  assert.equal(orphan.data.error.code, "payer_missing");
 });

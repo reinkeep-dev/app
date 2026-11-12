@@ -1,5 +1,5 @@
 [
-  "Early access. No third-party security audit yet. Do not use it with money you cannot lose.",
+  "Early access. Reviewed by our team; no outside security audit yet. Do not use it with money you cannot lose.",
   "Only the signer wrapper enforces. The MCP tools advise, and an agent that skips them is not stopped.",
   "An agent that can edit the policy file or run the approve command itself can walk around the gate. Keep them apart.",
   "Yes, when the request names the token: the gate reads its contract powers, first-seen liquidity and ticker copies from our collector. A token the collector has not seen is read straight from the chain, but then its liquidity is unknown. It finds powers under the common names only, and facts are not re-read on a schedule yet. Unknown always means REVIEW.",

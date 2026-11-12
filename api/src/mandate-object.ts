@@ -31,6 +31,7 @@ export type WatcherDeps = {
 };
 
 const WEBHOOK_TIMEOUT_MS = 5000;
+export const TEST_GAP_MS = 60_000;
 const eventKey = (seq: number) => "e:" + String(seq).padStart(8, "0");
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 200);
 
@@ -115,6 +116,10 @@ export class MandateWatcher {
     return this.serial(async () => {
       const m = await this.need();
       if (!m.webhookUrl) throw new ApiError(400, "no_webhook", "This mandate has no webhookUrl.");
+      // One test a minute: this route is free, so without a pause it could be looped to flood someone else's URL.
+      const last = (await this.d.storage.get<number>("lastTest")) ?? 0;
+      if (this.d.now() - last < TEST_GAP_MS) throw new ApiError(429, "test_too_soon", "One webhook test a minute. Try again shortly.");
+      await this.d.storage.put("lastTest", this.d.now());
       const event = await this.append(m, { kind: "test", changes: [], signal: m.lastSignal ?? undefined }, true);
       await this.d.storage.put("m", m);
       return { event };
