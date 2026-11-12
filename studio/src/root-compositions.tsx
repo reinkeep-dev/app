@@ -7,6 +7,8 @@ import {KeepMascot, type Pose} from './keep-mascot';
 import {STICKERS, Sticker} from './family-stickers';
 import {PAGE_ART} from './page-art';
 import {XAvatar, XHeader} from './x-profile';
+import {XAvatar3D, XAvatar3DWow} from './x-avatar-3d';
+import {XAvatarSlip, XAvatarVault, XAvatarVerdict, XHeaderSlip, XHeaderVault, XHeaderVerdict} from './x-profile-v3';
 
 const POSES: Pose[] = ['hello', 'allow', 'review', 'block', 'calm'];
 
@@ -26,6 +28,16 @@ export const RootCompositions: React.FC = () => (
 		{/* X profile art (rendered by hand: npx remotion still XAvatar / XHeader) */}
 		<Still id="XAvatar" component={XAvatar} width={400} height={400} />
 		<Still id="XHeader" component={XHeader} width={1500} height={500} />
+		<Still id="XAvatar3D-Plain" component={XAvatar3D} defaultProps={{grid: false}} width={800} height={800} />
+		<Still id="XAvatar3D-Grid" component={XAvatar3D} defaultProps={{grid: true}} width={800} height={800} />
+		<Still id="XAvatar3D-Wow" component={XAvatar3DWow} width={800} height={800} />
+		{/* X profile art v3: three directions (rendered by hand: npx remotion still XAvatar-Vault etc.) */}
+		<Still id="XAvatar-Vault" component={XAvatarVault} width={400} height={400} />
+		<Still id="XHeader-Vault" component={XHeaderVault} width={1500} height={500} />
+		<Still id="XAvatar-Slip" component={XAvatarSlip} width={400} height={400} />
+		<Still id="XHeader-Slip" component={XHeaderSlip} width={1500} height={500} />
+		<Still id="XAvatar-Verdict" component={XAvatarVerdict} width={400} height={400} />
+		<Still id="XHeader-Verdict" component={XHeaderVerdict} width={1500} height={500} />
 		{POSES.map((pose) => (
 			<Still key={pose} id={`Keep-${pose}`} component={KeepMascot} defaultProps={{pose}} width={900} height={900} />
 		))}
