@@ -37,6 +37,8 @@ test("autopsy patterns: still trading, pulled, faded, never lived, too young, no
   const busy = { liq: 10_000, vol: 900, buys: 20, sells: 10 };
   assert.equal(classify(poolRec(busy, { liq: 9_000, vol: 400, buys: 5, sells: 3, alive: true }), NOW), "still_trading");
   assert.equal(classify(poolRec(busy, { liq: 500, vol: 10, buys: 1, sells: 0, alive: false }), NOW), "liquidity_pulled", "under 10% of the start");
+  // Real case 2026-11-12 ("duh"): $70.5k -> $1.65 a day later, but 2,336 swaps in the 24 h before (trading before the pull).
+  assert.equal(classify(poolRec({ liq: 70_543, vol: 83_091, buys: 200, sells: 49 }, { liq: 1.65, vol: 563_444, buys: 1500, sells: 836, alive: true }), NOW), "liquidity_pulled", "an old row stored alive is still pulled");
   assert.equal(classify(poolRec(busy, { liq: 1_000, vol: 10, buys: 1, sells: 0, alive: false }), NOW), "faded", "exactly 10% is not 'pulled'");
   assert.equal(classify(poolRec({ liq: 2_000, vol: 0, buys: 1, sells: 0 }, { liq: 100, vol: 0, buys: 0, sells: 0, alive: false }), NOW), "never_lived", "barely traded at first sight comes first");
   assert.equal(classify(poolRec(busy, null, NOW - 3_600_000), NOW), "too_young");
