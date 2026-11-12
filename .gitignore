@@ -1,0 +1,8 @@
+node_modules/
+.dev.vars
+*.key
+collector/data/
+.wrangler/
+.DS_Store
+.env*
+*.pem

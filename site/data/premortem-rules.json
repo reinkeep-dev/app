@@ -1,0 +1,22 @@
+{
+  "note": "Launch risks for the pre-mortem (api/src/premortem.ts). 'launch' rules are our own rules of thumb, not fitted to outcome data yet. 'gate' fixes go with the token rules in rules.json: what a builder can change so the gate stops objecting.",
+  "launch": [
+    { "code": "sell_tax_high", "severity": "high", "field": "sellTaxPct", "over": 10, "plain": "A sell tax over 10% keeps a big share of every exit. Buyers read it as a trap.", "fix": "Keep the sell tax at 5% or less, or drop it." },
+    { "code": "sell_tax_medium", "severity": "medium", "field": "sellTaxPct", "over": 5, "plain": "A sell tax over 5% makes leaving costly.", "fix": "Lower the sell tax to 5% or less." },
+    { "code": "buy_tax_high", "severity": "medium", "field": "buyTaxPct", "over": 10, "plain": "A buy tax over 10% costs every new holder before the price moves.", "fix": "Keep the buy tax at 5% or less." },
+    { "code": "tax_gap", "severity": "high", "field": "taxGapPct", "over": 5, "plain": "Selling costs much more than buying. That is the shape of a honeypot.", "fix": "Make buy and sell tax the same, or close to it." },
+    { "code": "team_allocation_high", "severity": "high", "field": "teamAllocationPct", "over": 20, "plain": "The team holds over 20% of supply. One sale can sink the price.", "fix": "Keep team tokens at 10% or less, and vest them." },
+    { "code": "team_allocation_medium", "severity": "medium", "field": "teamAllocationPct", "over": 10, "plain": "The team holds over 10% of supply.", "fix": "Lower the team share or lock it with a public vesting contract." },
+    { "code": "liquidity_unlocked", "severity": "high", "field": "liquidityLockDays", "under": 1, "plain": "The liquidity is not locked. It can be pulled at any moment.", "fix": "Lock the pool's liquidity with a public locker before launch." },
+    { "code": "liquidity_lock_short", "severity": "medium", "field": "liquidityLockDays", "under": 30, "plain": "The liquidity lock ends within a month.", "fix": "Lock it for 90 days or more." }
+  ],
+  "gateFixes": {
+    "token_mint_live_owner": "Remove the mint function, or renounce ownership before launch.",
+    "token_has_blacklist": "Remove the blacklist function. Agents using Reinkeep will not buy a token that can freeze them.",
+    "token_has_pause": "Remove the pause switch, or renounce the owner who can use it.",
+    "token_upgradeable": "Deploy a plain, non-upgradeable contract.",
+    "token_ticker_copy": "Pick a ticker no earlier token uses.",
+    "token_low_liquidity": "Start with at least $1,000 of liquidity.",
+    "token_facts_unknown": "State every field of the draft so nothing is left unknown."
+  }
+}

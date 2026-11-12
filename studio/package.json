@@ -1,0 +1,27 @@
+{
+  "name": "reinkeep-studio",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Remotion project that renders every visual asset for the Reinkeep site.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render:assets": "node render-assets.mjs",
+    "check:render": "node check-render.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "@remotion/cli": "^4.0.542",
+    "@remotion/renderer": "^4.0.542",
+    "@remotion/three": "^4.0.542",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.542",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "typescript": "^7.0.2"
+  }
+}

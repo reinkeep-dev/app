@@ -1,0 +1,34 @@
+// Cloudflare deploy config for the token-data collector. NOT deployed yet: see DEPLOY.md for the steps that need your
+// Cloudflare account. Run wrangler commands from this folder (reinkeep/collector).
+{
+  "name": "reinkeep-collector",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-11-01",
+
+  // This Worker only runs on a schedule and answers no web requests, so it gets no public address.
+  // The account's workers.dev name (reinkeep.workers.dev) was registered on 2026-11-10 because Cloudflare requires one
+  // before it accepts a cron schedule. This Worker does not use it: no public address.
+  "workers_dev": false,
+  "preview_urls": false,
+
+  // The cron schedule, every 5 minutes. GeckoTerminal refuses about 65% of our calls from Cloudflare's shared address
+  // (measured 2026-11-10), and one page holds only the 20 newest pools, so we try often. Each run uses up to 45 of
+  // the 50 outgoing requests the free plan allows.
+  "triggers": { "crons": ["*/5 * * * *"] },
+
+  // Keep the run log (the "collect_run" line with the stats) so it can be read later.
+  "observability": { "enabled": true },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reinkeep-collector",
+      // Created 2026-11-10 with:  npx wrangler d1 create reinkeep-collector   (region APAC)
+      "database_id": "7e8716f6-9aa3-4d51-a02b-b34e57831738"
+    }
+  ]
+
+  // Optional: a different RPC node than the public one (it is rate-limited and has no uptime promise).
+  // If its URL contains a key, store it as a secret instead:  npx wrangler secret put RPC_URL
+  // "vars": { "RPC_URL": "https://..." }
+}
