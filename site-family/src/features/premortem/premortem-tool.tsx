@@ -11,7 +11,7 @@ const ERRORS: Record<PremortemFailure, string> = {
   limit: 'You used today’s 60 pre-mortems. Come back tomorrow.',
   not_live: 'The pre-mortem goes live with the next update of the gate.',
   rejected: 'The gate could not read that draft.',
-  failed: 'Could not reach the gate. Try again in a moment; if it keeps failing, your network may block workers.dev, so try another connection.',
+  failed: 'Could not reach the gate. Try again in a moment; if it keeps failing, try another connection.',
 }
 
 type Powers = Draft['contract']

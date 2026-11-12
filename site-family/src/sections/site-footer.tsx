@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import { SiteSticker } from '@/components/site-sticker'
 
-const GATE = 'https://reinkeep-gate.reinkeep.workers.dev'
+import { GATE } from '@/features/gate-tool/gate-api'
 
 type Item = { label: string; to?: string; href?: string }
 const GROUPS: { title: string; items: Item[] }[] = [

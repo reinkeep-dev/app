@@ -1,6 +1,8 @@
 // Single place that knows where the verdict endpoint lives and what it returns.
 // Live gate by default. For a local test against `wrangler dev`, run Vite with VITE_GATE_URL=http://127.0.0.1:8799
-export const VERDICT_API_BASE: string = import.meta.env.VITE_GATE_URL || 'https://reinkeep-gate.reinkeep.workers.dev'
+import { GATE } from '@/features/gate-tool/gate-api'
+
+export const VERDICT_API_BASE: string = GATE
 
 export type Decision = 'ALLOW' | 'REVIEW' | 'BLOCK'
 

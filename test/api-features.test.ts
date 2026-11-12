@@ -19,7 +19,7 @@ import { MINT, PLAIN_CODE, RPC_URL, codeWith, fakeInternet, type TokenSpec } fro
 import { PAYER, goodRequest, knownPolicy, makeApp, withProof } from "./api-fixture.ts";
 
 const OWNER = "0x1111111111111111111111111111111111111111";
-const SHARE = "https://reinkeep-gate.reinkeep.workers.dev/r/";
+const SHARE = "https://api.reinkeep.xyz/r/";
 const addr = (n: number) => "0x" + n.toString(16).padStart(40, "0");
 const RISKY = addr(0xa1); // has mint() and a live owner: BLOCK
 const PLAIN = addr(0xa2); // a bare contract: liquidity unknown, so REVIEW at best
@@ -409,7 +409,7 @@ test("share page: shows the decision, reasons, payment, token facts, signer and 
   assert.ok(page.text.includes(g.data.receipt.signer));
   assert.match(page.text, /Valid signature/);
   assert.ok(page.text.includes(`/api/v1/receipts/${g.data.id}`));
-  assert.ok(page.text.includes("https://reinkeep-site.reinkeep.workers.dev"));
+  assert.ok(page.text.includes("https://reinkeep.xyz"));
   assert.ok(page.text.includes(new Date(g.data.receipt.issuedAt * 1000).toISOString()));
   assert.match(page.headers.get("content-security-policy")!, /default-src 'none'/);
   assert.doesNotMatch(page.text, /<script/i);
