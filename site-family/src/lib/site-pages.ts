@@ -15,7 +15,7 @@ export type SitePage = {
 }
 
 export const SITE_URL = 'https://reinkeep.xyz'
-export const X_HANDLE = '@reinkeep'
+export const X_HANDLE = '@reinkeepgate'
 
 export const pageTitle = (name: string) => `${name} · Reinkeep AI`
 

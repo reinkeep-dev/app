@@ -32,8 +32,8 @@ const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: 'Project',
     items: [
-      { label: 'Open data on GitHub', href: 'https://github.com/reinkeep/data' },
-      { label: 'MCP server on GitHub', href: 'https://github.com/reinkeep/mcp' },
+      { label: 'Open data on GitHub', href: 'https://github.com/reinkeep-dev/data' },
+      { label: 'MCP server on GitHub', href: 'https://github.com/reinkeep-dev/mcp' },
       { label: 'X @reinkeepgate', href: 'https://x.com/reinkeepgate' },
     ],
   },
