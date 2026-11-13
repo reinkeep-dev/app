@@ -1,9 +1,10 @@
 import { PageHero } from '@/components/page-hero'
 import { PremortemTool } from '@/features/premortem/premortem-tool'
-import { pageTitle, useDocumentTitle } from '@/lib/use-document-title'
+import { useDocumentTitle } from '@/lib/use-document-title'
+import { SITE_PAGES } from '@/lib/site-pages'
 
 export default function PremortemPage() {
-  useDocumentTitle(pageTitle('Pre-mortem'))
+  useDocumentTitle(SITE_PAGES.premortem.title)
   return (
     <>
       <PageHero

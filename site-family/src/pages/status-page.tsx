@@ -1,9 +1,10 @@
 import { PageHero } from '@/components/page-hero'
 import { StatusBoard } from '@/features/status/status-board'
-import { pageTitle, useDocumentTitle } from '@/lib/use-document-title'
+import { useDocumentTitle } from '@/lib/use-document-title'
+import { SITE_PAGES } from '@/lib/site-pages'
 
 export default function StatusPage() {
-  useDocumentTitle(pageTitle('Status'))
+  useDocumentTitle(SITE_PAGES.status.title)
   return (
     <>
       <PageHero

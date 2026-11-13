@@ -10,11 +10,12 @@ import { FaqSection } from '@/sections/faq-section'
 import { GateDemo } from '@/features/gate/gate-demo'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { SITE_PAGES } from '@/lib/site-pages'
 
 // Section order follows a feature tour (agents, how it works, rules and receipts, every tool, roadmap), in the
 // Family-style look. Every claim is something the live gate does; what is not built sits under "Not yet".
 export default function HomePage() {
-  useDocumentTitle('Reinkeep AI: the pre-trade gate for AI agents')
+  useDocumentTitle(SITE_PAGES.home.title)
   return (
     <>
       <HeroSection />

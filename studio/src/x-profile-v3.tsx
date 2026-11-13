@@ -9,7 +9,7 @@ import {AbsoluteFill, continueRender, delayRender, staticFile} from 'remotion';
 const MONO = 'ui-monospace, "SF Mono", Menlo, monospace';
 const SANS = '"Inter Site", system-ui, sans-serif';
 
-function useInter() {
+export function useInter() {
 	const [handle] = useState(() => delayRender('load Inter'));
 	useEffect(() => {
 		new FontFace('Inter Site', `url(${staticFile('fonts/inter-latin-wght.woff2')}) format('woff2')`, {weight: '100 900'})

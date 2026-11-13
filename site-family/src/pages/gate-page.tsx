@@ -3,10 +3,11 @@ import { PageHero } from '@/components/page-hero'
 import { CodeBlock } from '@/components/code-block'
 import { GateTool } from '@/features/gate-tool/gate-tool'
 import { CURL_GATE, MCP_CLAUDE } from '@/features/docs/docs-snippets'
-import { pageTitle, useDocumentTitle } from '@/lib/use-document-title'
+import { useDocumentTitle } from '@/lib/use-document-title'
+import { SITE_PAGES } from '@/lib/site-pages'
 
 export default function GatePage() {
-  useDocumentTitle(pageTitle('Gate'))
+  useDocumentTitle(SITE_PAGES.gate.title)
   return (
     <>
       <PageHero
