@@ -163,8 +163,8 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
         <CodeBlock label="Client config (the exact shape depends on your client)" code={MCP_JSON} />
         <p>
           Setup notes and the tool list also live on GitHub:{' '}
-          <a href="https://github.com/reinkeep/mcp" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep/mcp</a>. The launch data the gate reads is open too:{' '}
-          <a href="https://github.com/reinkeep/data" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep/data</a>.
+          <a href="https://github.com/reinkeep-dev/mcp" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep-dev/mcp</a>. The launch data the gate reads is open too:{' '}
+          <a href="https://github.com/reinkeep-dev/data" target="_blank" rel="noopener" className="font-medium text-ink underline underline-offset-4">reinkeep-dev/data</a>.
         </p>
         <p>Tools:</p>
         <dl className="divide-y divide-hair border-y border-hair">
