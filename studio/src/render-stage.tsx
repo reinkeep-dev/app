@@ -5,11 +5,13 @@ import {useVideoConfig} from 'remotion';
 
 // Shared studio: pure black background (the site blends renders with `screen`, so black turns clear),
 // and a hand-built light studio for the metal to reflect. No HDR files, nothing fetched at render time.
-export const Stage: React.FC<{children: React.ReactNode; camZ?: number; fov?: number; size?: [number, number]}> = ({
+// transparent: no black background, so the render keeps alpha (for sprites laid over light surfaces).
+export const Stage: React.FC<{children: React.ReactNode; camZ?: number; fov?: number; size?: [number, number]; transparent?: boolean}> = ({
 	children,
 	camZ = 7,
 	fov = 30,
 	size,
+	transparent = false,
 }) => {
 	const video = useVideoConfig();
 	const [width, height] = size ?? [video.width, video.height];
@@ -17,11 +19,11 @@ export const Stage: React.FC<{children: React.ReactNode; camZ?: number; fov?: nu
 		<ThreeCanvas
 			width={width}
 			height={height}
-			style={{backgroundColor: '#000'}}
+			style={{backgroundColor: transparent ? 'transparent' : '#000'}}
 			camera={{fov, position: [0, 0, camZ]}}
-			gl={{antialias: true, preserveDrawingBuffer: true}}
+			gl={{antialias: true, preserveDrawingBuffer: true, alpha: transparent}}
 		>
-			<color attach="background" args={['#000']} />
+			{!transparent && <color attach="background" args={['#000']} />}
 			<ambientLight intensity={0.05} />
 			<directionalLight position={[-3, 4, 5]} intensity={1.2} color="#FFF1D6" />
 			<Environment resolution={512} frames={1}>
