@@ -1,9 +1,10 @@
 import { PageHero } from '@/components/page-hero'
 import { DocsContent, SECTIONS } from '@/features/docs/docs-content'
-import { pageTitle, useDocumentTitle } from '@/lib/use-document-title'
+import { useDocumentTitle } from '@/lib/use-document-title'
+import { SITE_PAGES } from '@/lib/site-pages'
 
 export default function DocsPage() {
-  useDocumentTitle(pageTitle('Docs'))
+  useDocumentTitle(SITE_PAGES.docs.title)
   return (
     <>
       <PageHero

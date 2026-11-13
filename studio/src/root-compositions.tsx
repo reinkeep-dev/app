@@ -6,8 +6,10 @@ import {CardGate, CardReceipt, CardRules, DoorBuys, DoorPays, OgImage, SplitLaye
 import {KeepMascot, type Pose} from './keep-mascot';
 import {STICKERS, Sticker} from './family-stickers';
 import {PAGE_ART} from './page-art';
+import {OgCard} from './og-card';
 import {XAvatar, XHeader} from './x-profile';
 import {XAvatar3D, XAvatar3DWow} from './x-avatar-3d';
+import {RingLand, LAND_FRAMES} from './ring-land';
 import {XAvatarSlip, XAvatarVault, XAvatarVerdict, XHeaderSlip, XHeaderVault, XHeaderVerdict} from './x-profile-v3';
 
 const POSES: Pose[] = ['hello', 'allow', 'review', 'block', 'calm'];
@@ -25,11 +27,14 @@ export const RootCompositions: React.FC = () => (
 		<Still id="DoorBuys" component={DoorBuys} width={1000} height={1000} />
 		<Still id="SplitLayers" component={SplitLayers} width={1000} height={1000} />
 		<Still id="OgImage" component={OgImage} width={1200} height={630} />
+		<Still id="OgCard" component={OgCard} width={1200} height={630} defaultProps={{card: 'Your agent pays.\nYou hold the reins.', art: 'home'}} />
 		{/* X profile art (rendered by hand: npx remotion still XAvatar / XHeader) */}
 		<Still id="XAvatar" component={XAvatar} width={400} height={400} />
 		<Still id="XHeader" component={XHeader} width={1500} height={500} />
 		<Still id="XAvatar3D-Plain" component={XAvatar3D} defaultProps={{grid: false}} width={800} height={800} />
 		<Still id="XAvatar3D-Grid" component={XAvatar3D} defaultProps={{grid: true}} width={800} height={800} />
+		{/* launch film hero sprite (rendered to PNG frames by hand) */}
+		<Composition id="RingLand" component={RingLand} durationInFrames={LAND_FRAMES} fps={30} width={720} height={720} />
 		<Still id="XAvatar3D-Wow" component={XAvatar3DWow} width={800} height={800} />
 		{/* X profile art v3: three directions (rendered by hand: npx remotion still XAvatar-Vault etc.) */}
 		<Still id="XAvatar-Vault" component={XAvatarVault} width={400} height={400} />

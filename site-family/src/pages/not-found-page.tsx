@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { SiteSticker } from '@/components/site-sticker'
-import { pageTitle, useDocumentTitle } from '@/lib/use-document-title'
+import { useDocumentTitle } from '@/lib/use-document-title'
+import { pageTitle } from '@/lib/site-pages'
 
 export default function NotFoundPage() {
   useDocumentTitle(pageTitle('Page not found'))
