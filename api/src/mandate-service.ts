@@ -13,6 +13,7 @@ import type { PrivateKeyAccount } from "viem/accounts";
 import { defaultPolicy, evaluateToken, type TokenFactSheet } from "../../engine/policy.ts";
 import type { ContractFacts } from "../../collector/src/types.ts";
 import { ApiError } from "./api-error.ts";
+import { checkEmail, maskEmail } from "./mandate-email.ts";
 import { canonicalJson } from "./canonical-json.ts";
 import { RECEIPT_DOMAIN, type Decision } from "./receipt-signing.ts";
 
@@ -64,6 +65,7 @@ export type MandateEvent = {
   error?: string; // set when the chain could not be read this time
   signal?: Signal;
   webhook?: { delivered: boolean; status: number | null };
+  email?: { sent: boolean; status: number | null };
 };
 
 export type Mandate = {
@@ -71,6 +73,10 @@ export type Mandate = {
   token: string;
   webhookUrl: string | null;
   webhookSecret: string | null; // shown once at creation, kept to sign deliveries
+  // Optional email alerts (mandate-email.ts). Missing on mandates created before email existed: read as null / "hold" / 0.
+  email?: string | null;
+  emailedAction?: Action; // the action of the last email that went out; the next email waits for a different one
+  emailsSent?: number; // attempts, capped at MAX_EMAILS_PER_MANDATE
   createdAt: number; // ms
   expiresAt: number; // ms
   cancelled: boolean;
@@ -234,15 +240,16 @@ const randomHex = (bytes: number) => Array.from(crypto.getRandomValues(new Uint8
 export const newMandateId = () => "md_" + randomHex(16);
 export const newWebhookSecret = () => "whsec_" + randomHex(32);
 
-export type MandateInput = { token: string; webhookUrl: string | null };
+export type MandateInput = { token: string; webhookUrl: string | null; email?: string | null };
 
 export function parseMandateBody(raw: unknown): MandateInput {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) throw new ApiError(400, "invalid_body", "Body must be a JSON object.");
   const b = raw as Record<string, unknown>;
-  for (const k of Object.keys(b)) if (k !== "token" && k !== "webhookUrl") throw new ApiError(400, "unknown_field", `Unknown field: ${k.slice(0, 40)}.`);
+  for (const k of Object.keys(b)) if (k !== "token" && k !== "webhookUrl" && k !== "email") throw new ApiError(400, "unknown_field", `Unknown field: ${k.slice(0, 40)}.`);
   if (typeof b.token !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(b.token)) throw new ApiError(400, "invalid_token", "token must be a 0x address with 40 hex characters.");
   const webhookUrl = b.webhookUrl === undefined || b.webhookUrl === null ? null : checkWebhookUrl(b.webhookUrl);
-  return { token: b.token.toLowerCase(), webhookUrl };
+  const email = b.email === undefined || b.email === null ? null : checkEmail(b.email);
+  return { token: b.token.toLowerCase(), webhookUrl, email };
 }
 
 // What the API shows. The secret only ever appears in the creation answer, never here.
@@ -257,6 +264,7 @@ export function publicView(m: Mandate, nowMs: number) {
     checkEveryMinutes: CHECK_EVERY_MS / 60_000,
     checks: m.checks,
     webhook: m.webhookUrl ? { url: m.webhookUrl } : null,
+    email: m.email ? maskEmail(m.email) : null,
     signal: m.lastSignal,
   };
 }

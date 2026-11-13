@@ -2,7 +2,7 @@
 // these routes check the input, then pass the call on. The mandate id is long and random: knowing it is what lets
 // you read or change that mandate, so treat it like a password.
 //
-//   POST   /api/v1/mandates                 {token, webhookUrl?}  -> 201-style body, 200 status; costs 5 gate calls
+//   POST   /api/v1/mandates                 {token, webhookUrl?, email?}  -> 201-style body, 200 status; costs 5 gate calls
 //   GET    /api/v1/mandates/{id}            state, expiry, latest signed signal
 //   GET    /api/v1/mandates/{id}/events     ?after=<seq>&limit=<1..100>
 //   POST   /api/v1/mandates/{id}/renew      +7 days; costs 5 gate calls

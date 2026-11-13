@@ -1,5 +1,5 @@
 // Mandates: watch a held token for 7 days, re-reading its contract every 30 minutes, with signed exit/watch/hold signals
-// and HMAC-signed webhooks. Driven with a fake clock, a fake chain reader and a fake Durable Object storage. No network.
+// HMAC-signed webhooks and email alerts. Driven with a fake clock, a fake chain reader and a fake Durable Object storage. No network.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -11,6 +11,7 @@ import {
   CHECK_EVERY_MS, FIELD_ROLE, MANDATE_MS, MAX_EVENTS, checkWebhookUrl, chooseAction, diffContract, verifySignal, webhookSignature, type FreshRead,
 } from "../api/src/mandate-service.ts";
 import { FreeTier } from "../api/src/metering.ts";
+import { MAX_EMAILS_PER_MANDATE, checkEmail, maskEmail, resendSender, type EmailMessage } from "../api/src/mandate-email.ts";
 import { makeWorker } from "../api/src/worker.ts";
 
 const T0 = 1_700_000_000_000;
@@ -50,7 +51,7 @@ function memoryStorage() {
 }
 
 type Hook = { url: string; headers: Headers; body: string };
-function bench(o: { webhookStatus?: number } = {}) {
+function bench(o: { webhookStatus?: number; mail?: { status: number } } = {}) {
   const account = privateKeyToAccount(generatePrivateKey());
   const clock = { now: T0 };
   const chain = { facts: contract(), sheetOver: {} as Partial<TokenFacts>, fail: false as boolean | string };
@@ -65,14 +66,16 @@ function bench(o: { webhookStatus?: number } = {}) {
     hooks.push({ url, headers: new Headers(init.headers), body: String(init.body) });
     return new Response("ok", { status: o.webhookStatus ?? 200 });
   }) as unknown as typeof fetch;
-  const w = new MandateWatcher({ storage, now: () => clock.now, account, readFresh, fetch: fetchFn });
+  const mails: EmailMessage[] = [];
+  const sendEmail = o.mail ? async (msg: EmailMessage) => (mails.push(msg), { sent: o.mail!.status < 300, status: o.mail!.status }) : undefined;
+  const w = new MandateWatcher({ storage, now: () => clock.now, account, readFresh, fetch: fetchFn, sendEmail });
   const tick = async (n = 1) => {
     for (let i = 0; i < n; i++) {
       clock.now = storage.alarm ?? clock.now + CHECK_EVERY_MS;
       await w.alarm();
     }
   };
-  return { w, account, clock, chain, hooks, storage, tick };
+  return { w, account, clock, chain, hooks, storage, tick, mails, mail: o.mail };
 }
 
 const ID = "md_" + "ab".repeat(16);
@@ -275,6 +278,79 @@ test("webhook URL: https public host only", () => {
   }
 });
 
+// --- email alerts ---------------------------------------------------------------------------------------------
+
+const MAIL = "Owner.Name@Example.COM";
+
+test("email: a clean token sends nothing; turning EXIT sends one; staying EXIT sends no more; back to HOLD sends one", async () => {
+  const b = bench({ mail: { status: 200 } });
+  const r = await b.w.create(ID, { token: TOKEN, webhookUrl: null, email: checkEmail(MAIL) });
+  assert.equal(r.event.email, undefined, "first check is HOLD: no email");
+  assert.equal(r.mandate.email, "O***@example.com", "address shown masked");
+  b.chain.facts = contract({ owner: "0x00000000000000000000000000000000000000bb" });
+  await b.tick();
+  assert.equal(b.mails.length, 1);
+  assert.equal(b.mails[0].to, "Owner.Name@example.com", "local part kept, domain lower-cased");
+  assert.match(b.mails[0].subject, /^Reinkeep: EXIT on 0x0000…00f1$/);
+  assert.match(b.mails[0].text, /owner: 0x0+aa -> 0x0+bb/);
+  assert.match(b.mails[0].text, new RegExp(`/api/v1/mandates/${ID}/events`));
+  const { events } = await b.w.events(1, 10);
+  assert.deepEqual(events[0].email, { sent: true, status: 200 });
+  const bb = { owner: "0x00000000000000000000000000000000000000bb" };
+  b.chain.facts = contract({ ...bb, hasMint: true, mintWithLiveOwner: true }); // a BLOCK rule: EXIT on every check
+  await b.tick(3);
+  assert.equal((await b.w.get()).signal!.action, "exit");
+  assert.equal(b.mails.length, 1, "same action: no repeat email");
+  b.chain.facts = contract(bb); // mint goes away: WATCH, then nothing changes: HOLD
+  await b.tick(2);
+  assert.equal((await b.w.get()).signal!.action, "hold");
+  assert.deepEqual(b.mails.map((m) => m.subject.split(" ")[1]), ["EXIT", "WATCH", "HOLD"]);
+});
+
+test("email: a mandate that starts on EXIT emails at once; a failed send is retried next check; tries are capped", async () => {
+  const b = bench({ mail: { status: 429 } });
+  b.chain.facts = contract({ hasMint: true, mintWithLiveOwner: true });
+  const r = await b.w.create(ID, { token: TOKEN, webhookUrl: null, email: "a@b.co" });
+  assert.deepEqual(r.event.email, { sent: false, status: 429 });
+  await b.tick();
+  assert.equal(b.mails.length, 2, "not sent yet, so the next check tries again");
+  assert.notEqual(b.mails[0].idempotencyKey, b.mails[1].idempotencyKey);
+  await b.tick(MAX_EMAILS_PER_MANDATE + 5);
+  assert.equal(b.mails.length, MAX_EMAILS_PER_MANDATE);
+});
+
+test("email: refused at creation when the server has no email set up; no email field means no email", async () => {
+  const off = bench();
+  await assert.rejects(off.w.create(ID, { token: TOKEN, webhookUrl: null, email: "a@b.co" }), (e: any) => e.code === "email_unavailable");
+  const on = bench({ mail: { status: 200 } });
+  on.chain.facts = contract({ hasMint: true, mintWithLiveOwner: true });
+  const r = await on.w.create(ID, { token: TOKEN, webhookUrl: null });
+  assert.equal(r.event.email, undefined);
+  assert.equal(r.mandate.email, null);
+});
+
+test("email address: plain shape only", () => {
+  assert.equal(checkEmail("x@Sub.Example.io"), "x@sub.example.io");
+  assert.equal(maskEmail("bob@ex.com"), "b***@ex.com");
+  for (const bad of ["", "nobody", "a@b", "a b@c.com", "a@b..com", "<a@b.com>", "a@b.com,c@d.com", "x".repeat(250) + "@b.com", 5, null]) {
+    assert.throws(() => checkEmail(bad), (e: any) => e.code === "invalid_email", String(bad));
+  }
+});
+
+test("resendSender: POSTs to Resend with the key, idempotency key and a text body; a network error is sent:false", async () => {
+  const seen: { url: string; init: RequestInit }[] = [];
+  const ok = resendSender("re_test", "Reinkeep <alerts@reinkeep.xyz>", (async (url: string, init: RequestInit) => (seen.push({ url, init }), new Response('{"id":"x"}'))) as unknown as typeof fetch);
+  const msg = { to: "a@b.co", subject: "s", text: "t", idempotencyKey: "md_1-2" };
+  assert.deepEqual(await ok(msg), { sent: true, status: 200 });
+  const h = new Headers(seen[0].init.headers);
+  assert.equal(seen[0].url, "https://api.resend.com/emails");
+  assert.equal(h.get("authorization"), "Bearer re_test");
+  assert.equal(h.get("idempotency-key"), "md_1-2");
+  assert.deepEqual(JSON.parse(String(seen[0].init.body)), { from: "Reinkeep <alerts@reinkeep.xyz>", to: ["a@b.co"], subject: "s", text: "t" });
+  const down = resendSender("re_test", "x <a@b.co>", (async () => { throw new Error("offline"); }) as unknown as typeof fetch);
+  assert.deepEqual(await down(msg), { sent: false, status: null });
+});
+
 // --- HTTP routes ---------------------------------------------------------------------------------------------
 
 function routes() {
@@ -319,6 +395,7 @@ test("HTTP: bad input is a clear 4xx, an unknown id is 404, a wrong method is 40
   const { call } = routes();
   assert.equal((await call("POST", "/api/v1/mandates", { token: "0x12" })).data.error.code, "invalid_token");
   assert.equal((await call("POST", "/api/v1/mandates", { token: TOKEN, extra: 1 })).data.error.code, "unknown_field");
+  assert.equal((await call("POST", "/api/v1/mandates", { token: TOKEN, email: "nope" })).data.error.code, "invalid_email");
   assert.equal((await call("POST", "/api/v1/mandates", { token: TOKEN, webhookUrl: "http://x.example.com" })).data.error.code, "invalid_webhook");
   assert.equal((await call("GET", "/api/v1/mandates/md_" + "0".repeat(32))).status, 404);
   assert.equal((await call("GET", "/api/v1/mandates/not-an-id")).status, 404);
