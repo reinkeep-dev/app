@@ -115,12 +115,13 @@ const TOOLS: { name: string; description: string; inputSchema: Schema }[] = [
   {
     name: "create_mandate",
     description:
-      "After you buy a token, ask Reinkeep to keep watching it for 7 days: the contract is re-read every 30 minutes and each check gives a signed signal, exit (sell or stop), watch (look closer) or hold. Optional webhookUrl gets HMAC-signed pushes. Costs 5 calls (free calls first, then $0.05 via x402: pass payment_signature). Keep the returned mandate id; it is the only key.",
+      "After you buy a token, ask Reinkeep to keep watching it for 7 days: the contract is re-read every 30 minutes and each check gives a signed signal, exit (sell or stop), watch (look closer) or hold. Optional webhookUrl gets HMAC-signed pushes; optional email gets one email each time the signal changes away from hold (or back). Costs 5 calls (free calls first, then $0.05 via x402: pass payment_signature). Keep the returned mandate id; it is the only key.",
     inputSchema: {
       type: "object",
       properties: {
         token: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$", description: "Token you hold" },
         webhookUrl: { type: "string", description: "Optional https URL on a public host for pushed events" },
+        email: { type: "string", description: "Optional address for an email when the signal turns exit or watch, and when it returns to hold" },
         payment_signature: { type: "string", pattern: "^[A-Za-z0-9+/=_-]+$", description: "Base64 x402 payment payload, only after the free calls are used up" },
       },
       required: ["token"],
@@ -379,6 +380,7 @@ async function callTool(name: string, args: Record<string, any>, req: Request, c
     case "create_mandate": {
       const body: Record<string, unknown> = { token: args.token };
       if (args.webhookUrl !== undefined) body.webhookUrl = args.webhookUrl;
+      if (args.email !== undefined) body.email = args.email;
       const sig = typeof args.payment_signature === "string" ? args.payment_signature : undefined;
       const r = await call("POST", "/api/v1/mandates", body, sig ? { "payment-signature": sig } : {});
       if (r.status === 200 && r.data) {

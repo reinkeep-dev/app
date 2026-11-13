@@ -3,13 +3,15 @@
 // takes its storage, clock, chain reader and fetch as arguments, so the Node tests drive it with a fake clock.
 //
 // Internal routes (only the worker calls them, with the mandate id already checked):
-//   POST /create {token, webhookUrl}   GET /get   GET /events?after=N&limit=N   POST /renew   POST /cancel   POST /test
+//   POST /create {token, webhookUrl, email}   GET /get   GET /events?after=N&limit=N   POST /renew   POST /cancel   POST /test
 import type { PrivateKeyAccount } from "viem/accounts";
 import type { TokenFactSheet } from "../../engine/policy.ts";
 import { ApiError } from "./api-error.ts";
+import { BASE_URL } from "./discovery.ts";
+import { MAX_EMAILS_PER_MANDATE, signalEmail, type EmailResult, type SendEmail } from "./mandate-email.ts";
 import {
   CHECK_EVERY_MS, MANDATE_MS, MAX_EVENTS, chooseAction, diffContract, judgeSheet, newWebhookSecret, publicView, signSignal, webhookSignature,
-  type Change, type EventKind, type FreshRead, type Mandate, type MandateEvent, type MandateInput,
+  type Change, type EventKind, type FreshRead, type Mandate, type MandateEvent, type MandateInput, type Signal,
 } from "./mandate-service.ts";
 
 // The slice of Durable Object storage used here (a Map-backed fake implements it in the tests).
@@ -28,6 +30,7 @@ export type WatcherDeps = {
   account: PrivateKeyAccount;
   readFresh: (token: string) => Promise<FreshRead>;
   fetch: typeof fetch;
+  sendEmail?: SendEmail; // absent when RESEND_API_KEY is not set: email mandates are then refused
 };
 
 const WEBHOOK_TIMEOUT_MS = 5000;
@@ -59,9 +62,11 @@ export class MandateWatcher {
   create(id: string, input: MandateInput) {
     return this.serial(async () => {
       if (await this.load()) throw new ApiError(409, "mandate_exists", "A mandate with this id already exists.");
+      if (input.email && !this.d.sendEmail) throw new ApiError(400, "email_unavailable", "Email alerts are not set up on this server; use webhookUrl or poll the events.");
       const now = this.d.now();
       const m: Mandate = {
         id, token: input.token, webhookUrl: input.webhookUrl, webhookSecret: input.webhookUrl ? newWebhookSecret() : null,
+        email: input.email ?? null, emailedAction: "hold", emailsSent: 0,
         createdAt: now, expiresAt: now + MANDATE_MS, cancelled: false, checks: 0, last: null, lastSignal: null, nextSeq: 1,
       };
       const event = await this.check(m, "created");
@@ -164,7 +169,8 @@ export class MandateWatcher {
     const notify = kind === "created" || changes.length > 0 || error !== undefined || m.lastSignal?.action !== action;
     m.checks++;
     m.lastSignal = signal;
-    const event = await this.append(m, { kind, changes, error, signal }, notify);
+    const email = await this.mail(m, signal, changes);
+    const event = await this.append(m, { kind, changes, error, signal, ...(email && { email }) }, notify);
     await this.d.storage.put("m", m);
     return event;
   }
@@ -176,6 +182,20 @@ export class MandateWatcher {
     const drop = event.seq - MAX_EVENTS;
     if (drop > 0) await this.d.storage.delete(eventKey(drop));
     return event;
+  }
+
+  // Email is stricter than the webhook: only when the action differs from the last email that went out (starting
+  // from "hold", so a clean token sends nothing), at most MAX_EMAILS_PER_MANDATE tries. A failed send leaves
+  // emailedAction as it was, so the next check tries again.
+  // ponytail: no global daily cap here (each watcher only sees itself); Resend's own limit (free plan 100/day) is the
+  // ceiling. Add a shared counter (FreeTier-style Durable Object) if email mandates ever get abused.
+  private async mail(m: Mandate, signal: Signal, changes: Change[]): Promise<EmailResult | undefined> {
+    if (!m.email || !this.d.sendEmail) return undefined;
+    if (signal.action === (m.emailedAction ?? "hold") || (m.emailsSent ?? 0) >= MAX_EMAILS_PER_MANDATE) return undefined;
+    m.emailsSent = (m.emailsSent ?? 0) + 1;
+    const r = await this.d.sendEmail(signalEmail(m.email, signal, changes, BASE_URL));
+    if (r.sent) m.emailedAction = signal.action;
+    return r;
   }
 
   // One attempt, 5 s. A receiver that is down misses the push, never the event: it stays in /events.

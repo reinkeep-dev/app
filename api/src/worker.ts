@@ -30,13 +30,14 @@ import { discovery } from "./discovery.ts";
 import { handleMcp } from "./mcp.ts";
 import { FreeTier, meter, type MeterEnv } from "./metering.ts";
 import { factsFresh, factsLive } from "./token-facts-source.ts";
+import { DEFAULT_MAIL_FROM, resendSender } from "./mandate-email.ts";
 import { MandateWatcher, watcherFetch, type MandateStorage } from "./mandate-object.ts";
 import { handleMandates, isMandateRoute, type MandateNamespace } from "./mandate-routes.ts";
 
 // The parts of the Durable Object API used here (typed locally so the Node tests and tsc need no Cloudflare types).
 type PayerStub = { fetch(req: Request): Promise<Response> };
 type PayerNamespace = { idFromName(name: string): unknown; get(id: unknown): PayerStub };
-type Env = MeterEnv & { REINKEEP_SIGNER_KEY?: string; RPC_URL?: string; DB?: D1Like; PAYER?: PayerNamespace; AI?: AiRunner; MANDATES?: MandateNamespace };
+type Env = MeterEnv & { REINKEEP_SIGNER_KEY?: string; RPC_URL?: string; DB?: D1Like; PAYER?: PayerNamespace; AI?: AiRunner; MANDATES?: MandateNamespace; RESEND_API_KEY?: string; MAIL_FROM?: string };
 // What the Workers runtime hands every request (and every Durable Object): only waitUntil is used.
 type Ctx = { waitUntil?: (p: Promise<unknown>) => void };
 const runOf = (ctx?: Ctx): RunContext => ({ waitUntil: ctx?.waitUntil ? (p) => ctx.waitUntil!(p) : undefined });
@@ -150,7 +151,8 @@ export class MandateWatch {
     if (!key || !KEY.test(key)) return null;
     if (this.watcher?.key !== key) {
       const readFresh = factsFresh({ rpc: chainRpc(this.env), now: Date.now, store: this.env.DB ? new D1CollectorStore(this.env.DB) : undefined });
-      const w = new MandateWatcher({ storage: this.storage, now: Date.now, account: privateKeyToAccount(key as `0x${string}`), readFresh, fetch: (i, init) => fetch(i, init) });
+      const sendEmail = this.env.RESEND_API_KEY ? resendSender(this.env.RESEND_API_KEY, this.env.MAIL_FROM ?? DEFAULT_MAIL_FROM, (i, init) => fetch(i, init)) : undefined;
+      const w = new MandateWatcher({ storage: this.storage, now: Date.now, account: privateKeyToAccount(key as `0x${string}`), readFresh, fetch: (i, init) => fetch(i, init), sendEmail });
       this.watcher = { key, w };
     }
     return this.watcher.w;

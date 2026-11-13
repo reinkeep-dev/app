@@ -89,10 +89,11 @@ GET ${API}/verdict/{address} reads the token's facts (the collector's data, else
 Body \`{ request, policy?, tokens: [address, ...] }\` with 1 to ${MAX_BATCH_TOKENS} tokens (\`payer\` is not accepted: a batch is stateless). The answer is \`{ results: [<gate answer per token, in order>] }\`, each with its own signed receipt. It costs one call per token: the free counter takes all of them or none, and past it the 402 asks for $${PRICE_USD.toFixed(2)} times the number of tokens (amount = ${PRICE_AMOUNT} x N base units).
 
 ## Mandates: keep watching a token you hold (POST ${API}/mandates)
-Body \`{ token, webhookUrl? }\`. Reinkeep re-reads the token's contract from the chain every ${CHECK_EVERY_MS / 60_000} minutes for ${MANDATE_DAYS} days, runs the token rules, and compares with the previous read. Each check gives a SIGNAL: \`exit\` (a BLOCK rule fires, a power such as mint/pause/blacklist/upgrade appeared, or the owner, implementation or contract changed), \`watch\` (REVIEW, another change such as supply, or the chain could not be read) or \`hold\` (ALLOW and nothing changed). Reinkeep never trades for you; your agent decides.
+Body \`{ token, webhookUrl?, email? }\`. Reinkeep re-reads the token's contract from the chain every ${CHECK_EVERY_MS / 60_000} minutes for ${MANDATE_DAYS} days, runs the token rules, and compares with the previous read. Each check gives a SIGNAL: \`exit\` (a BLOCK rule fires, a power such as mint/pause/blacklist/upgrade appeared, or the owner, implementation or contract changed), \`watch\` (REVIEW, another change such as supply, or the chain could not be read) or \`hold\` (ALLOW and nothing changed). Reinkeep never trades for you; your agent decides.
 - The answer is \`{ mandate, webhookSecret, event }\`. Keep \`mandate.id\`: it is the only key to the mandate. \`webhookSecret\` is shown once.
 - A signal is \`Signal(string mandate, address token, string action, string decision, bytes32 factsHash, uint64 issuedAt, uint64 validUntil)\` signed with EIP-712 in the receipt domain, valid ${SIGNAL_VALID_S / 3600} hour. Check it with POST ${API}/signals/verify.
 - Webhook: POST JSON \`{ type: "mandate.event", mandate, token, event }\` with header \`reinkeep-signature: t=<unix>,v1=<hex>\`, where v1 is HMAC-SHA256 of \`<t>.<raw body>\` with your webhookSecret. Sent on the first check, on any change, when the action changes and on a failed read; one try, 5 s. Missed pushes stay in GET ${API}/mandates/{id}/events.
+- Email: one plain-text email each time the action changes from the last one emailed (starting from hold, so a clean token sends none), at most 20 per mandate. GET shows the address masked. If this server has no email set up, a mandate with \`email\` is refused with 400 \`email_unavailable\` before it costs anything.
 - Costs ${MANDATE_CALLS} calls ($${(PRICE_USD * MANDATE_CALLS).toFixed(2)}): taken from the free calls first, then x402 for ${MANDATE_CALLS} x the price. Renew costs the same. Reading, events, test and delete are free.
 
 ## Pre-mortem: check a launch before it ships (POST ${API}/premortem)
@@ -382,7 +383,7 @@ export function openApi() {
           summary: summaryOf("/mandates"),
           description: `Costs ${MANDATE_CALLS} calls: free calls first (all or nothing), then x402 for ${MANDATE_CALLS} x ${PRICE_AMOUNT} base units. The webhookSecret appears only in this answer.`,
           parameters: [{ name: "PAYMENT-SIGNATURE", in: "header", required: false, schema: str(), description: `base64 x402 v2 payment payload for ${MANDATE_CALLS} x the price` }],
-          requestBody: jsonBody({ type: "object", required: ["token"], additionalProperties: false, properties: { token: addr("Token to watch"), webhookUrl: str({ format: "uri", maxLength: 500, description: "https, public host; receives signed events" }) } }),
+          requestBody: jsonBody({ type: "object", required: ["token"], additionalProperties: false, properties: { token: addr("Token to watch"), webhookUrl: str({ format: "uri", maxLength: 500, description: "https, public host; receives signed events" }), email: str({ format: "email", maxLength: 254, description: "Gets an email when the signal changes" }) } }),
           "x-payment": { protocol: "x402", version: X402_VERSION, scheme: "exact", network: NETWORK, asset: USDG, amount: `${PRICE_AMOUNT} x ${MANDATE_CALLS}`, priceUsd: PRICE_USD * MANDATE_CALLS, freeCallsPerDay: FREE_CALLS_PER_DAY },
           responses: {
             "200": jsonOk("The new mandate, its first event and the webhook secret", { type: "object", required: ["mandate", "event"], properties: { mandate: ref("Mandate"), webhookSecret: { oneOf: [str({ pattern: "^whsec_[0-9a-f]{64}$" }), { type: "null" }] }, event: ref("MandateEvent") } }),
@@ -516,7 +517,7 @@ export function openApi() {
           properties: {
             id: str({ pattern: "^md_[0-9a-f]{32}$" }), token: addr("Watched token"), state: { type: "string", enum: ["active", "expired", "cancelled"] },
             createdAt: str({ format: "date-time" }), expiresAt: str({ format: "date-time" }), checkEveryMinutes: { type: "integer" }, checks: { type: "integer" },
-            webhook: { oneOf: [{ type: "object", properties: { url: str() } }, { type: "null" }] }, signal: { oneOf: [ref("Signal"), { type: "null" }] },
+            webhook: { oneOf: [{ type: "object", properties: { url: str() } }, { type: "null" }] }, email: { oneOf: [str({ description: "Masked, e.g. a***@example.com" }), { type: "null" }] }, signal: { oneOf: [ref("Signal"), { type: "null" }] },
           },
         },
         MandateEvent: {
@@ -527,6 +528,7 @@ export function openApi() {
             changes: { type: "array", items: { type: "object", properties: { field: str(), before: {}, after: {} } } },
             error: str({ description: "Present when the chain could not be read" }), signal: ref("Signal"),
             webhook: { type: "object", properties: { delivered: { type: "boolean" }, status: { oneOf: [{ type: "integer" }, { type: "null" }] } } },
+            email: { type: "object", properties: { sent: { type: "boolean" }, status: { oneOf: [{ type: "integer" }, { type: "null" }] } } },
           },
         },
         Signal: {

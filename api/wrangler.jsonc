@@ -3,9 +3,12 @@
 //   npx wrangler secret put REINKEEP_SIGNER_KEY   0x + 64 hex: signs receipts. Losing it = receipts cannot be trusted.
 //   npx wrangler secret put RPC_URL               the Chainstack Robinhood endpoint, for live contract reads.
 //   npx wrangler secret put PRIORS_API_KEY        the Priors facilitator merchant key: verifies and settles x402 payments.
+//   npx wrangler secret put RESEND_API_KEY        optional, Resend key (re_...): email alerts for mandates. Without it
+//                                                 a mandate with an email is refused (400 email_unavailable).
 // Plain vars, under "vars" below:
 //   X402_PAY_TO        the owner's wallet address (0x...) that receives the $0.01 per paid gate call.
 //   FACILITATOR_URL    optional, default https://facilitator.priors.trade
+//   MAIL_FROM          optional, default "Reinkeep <alerts@reinkeep.xyz>"; its domain must be verified in Resend.
 // Without X402_PAY_TO or PRIORS_API_KEY the free tier still works; past it the gate answers 503 payment_not_configured.
 {
   "name": "reinkeep-gate",
