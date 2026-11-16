@@ -7,7 +7,7 @@
 // address (the payer the facilitator reports, else the signed authorization's `from`), or anyone could name a whale's
 // wallet and pay half. A failed balance read is "not a holder": full price, never a guess.
 //
-// Anyone can check a wallet first: GET /api/v1/gate/holder?address=0x... (same as Actuary's).
+// Anyone can check a wallet first: GET /api/v1/gate/holder?address=0x....
 // Paying a mandate in the token at half price, burned, is token-burn.ts.
 import { encodeFunctionData, parseAbi } from "viem";
 import type { RpcClient } from "../../collector/src/contract-facts.ts";

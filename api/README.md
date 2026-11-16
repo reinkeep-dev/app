@@ -164,7 +164,7 @@ the signature check and stops only at `TRANSFER_FROM_FAILED` (the test wallet he
 opinion, only when the rules say REVIEW: `judgement: { ran: true, lean, confidence, cites[], note, model, advisory: true }`.
 
 - It is signed inside the receipt body (`body.judgement`), so the opinion can be proven later.
-- `decision` stays REVIEW. Unlike Actuary's "resolve" mode, the model never changes the answer: the rules are the
+- `decision` stays REVIEW. The model never changes the answer: the rules are the
   product, and a model can be wrong or talked round. An agent can act on the lean itself.
 - The answer is checked: `lean` must be one of the three, `confidence` 0..1, every `cites` entry must be a reason code
   or fact name the model was shown, and a `note` with numbers not in the facts is dropped. Anything off gives

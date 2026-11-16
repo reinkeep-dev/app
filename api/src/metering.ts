@@ -82,7 +82,7 @@ function holderPricing(env: MeterEnv) {
   return { token: cfg.token, minBalance: String(cfg.minBalance), discountPct: HOLDER_DISCOUNT_PCT, amount: holderAmount(PRICE_AMOUNT), header: HOLDER_HEADER };
 }
 
-// `tokenOption` (mandates, once the token is live): pay half in the Reinkeep token, burned. Same field name as Actuary's.
+// `tokenOption` (mandates, once the token is live): pay half in the Reinkeep token, burned.
 function payment402(url: string, requirements: Requirements | null, error: string, tokenOption?: BurnOffer): Response {
   const base = paymentRequired(url, requirements, error);
   const body = tokenOption ? { ...base, token_option: tokenOption } : base;
