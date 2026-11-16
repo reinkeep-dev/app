@@ -48,16 +48,19 @@ export function rulesExplanation(input: ExplainInput): Explanation {
 
 // What each answer means, stated to the model: the check happens BEFORE any payment (live test 2026-11-11: without
 // this the model wrote "The payment was successful" for ALLOW and "has been reviewed" for REVIEW).
+// The small model often repeats these sentences word for word, so every one must pass checkExplanation itself
+// (test "every Meaning sentence passes the guard"). Live probe 2026-11-16: "go ahead and", "should not be bought" and
+// "Nothing has been paid yet" here made the guard drop 7 of 24 answers.
 const MEANING = {
-  ALLOW: "the agent may go ahead and make this payment. Nothing has been paid yet.",
-  REVIEW: "a human (not the agent) must look at this payment and decide before the agent pays. Nothing has been paid yet.",
-  BLOCK: "the agent must not make this payment. Nothing has been paid.",
+  ALLOW: "every rule passed, so the agent is cleared to make this payment. No money has moved yet.",
+  REVIEW: "a human (not the agent) must look at this payment and decide before the agent pays. No money has moved yet.",
+  BLOCK: "the agent must not make this payment. No money has moved.",
 } as const;
 
 const TOKEN_MEANING = {
   ALLOW: "none of the token rules objected to this token. That is not a promise that it is safe. Nothing has been bought.",
   REVIEW: "a person should look at this token before anyone buys it. Nothing has been bought.",
-  BLOCK: "this token should not be bought. Nothing has been bought.",
+  BLOCK: "a token rule objected, so this token is blocked. Nothing has been bought.",
 } as const;
 
 // Every fact the model is allowed to know, as lines of text. The guard checks its answer against exactly this.
@@ -85,6 +88,8 @@ const SIZE_OPINION = /\b(very|too|quite|really) (small|large|big|high|low|cheap|
 // writing sentences (seen live on GET /verdict, 2026-11-12). Not a summary a person can read, so the rules text is used.
 const ECHO = /\b(Decision|Meaning|Reasons?|Token fact|Token checked|Payment amount)\s*(\([^)]*\))?\s*:/;
 const ADVICE = /\b(should(n't| not)? (be )?(buy|bought|sell|sold|hold|held|avoid|avoided|trust|trusted)|do not buy|don't buy|should (buy|sell|invest|avoid|trust)|invest|guarantee[sd]?|safe to|financial advice|i recommend|we recommend|you must|go ahead and)\b/i;
+// The worked example's reason (prompt below) copied into a real answer would be an invented reason.
+const EXAMPLE_LEAK = /watch ?list/i;
 
 // Returns the text if it is clean, else null (caller falls back).
 export function checkExplanation(raw: unknown, facts: string[]): string | null {
@@ -92,6 +97,7 @@ export function checkExplanation(raw: unknown, facts: string[]): string | null {
   const text = raw.trim().replace(/\s+/g, " ");
   if (!text || text.length > EXPLAIN_MAX_CHARS) return null;
   if (ADVICE.test(text) || PAST.test(text) || SIZE_OPINION.test(text) || ECHO.test(text)) return null;
+  if (EXAMPLE_LEAK.test(text) && !EXAMPLE_LEAK.test(facts.join("\n"))) return null;
   // The reason codes carry digits too (e.g. v1), so allow numbers that appear in the facts text only.
   const allowed = new Set(facts.join("\n").match(NUMBER) ?? []);
   for (const n of text.match(NUMBER) ?? []) if (!allowed.has(n.replace(/[.,]+$/, ""))) return null;
@@ -107,11 +113,23 @@ function prompt(facts: string[]): { role: string; content: string }[] {
         "This check happens BEFORE any payment: never say a payment was made, sent, completed, successful or already reviewed. " +
         "Sentence 1: what the decision means. Sentence 2: the reason, taken only from the Reason lines (if there are none, say every rule passed). " +
         "Never repeat a sentence. Never invent a reason. Never say whether to buy, sell, hold or avoid anything; only say what the check found. " +
-        "Use only the facts given. Do not add numbers. Do not give advice or opinions about buying, investing, safety or the size of the amount. Output only the sentences.",
+        "Use only the facts given. Do not add numbers. Do not give advice or opinions about buying, investing, safety or the size of the amount. " +
+        "Write normal sentences: never copy a label such as 'Decision:', 'Meaning:', 'Reason' or 'Token fact' into your answer. Output only the sentences.",
     },
+    // One worked example, because the 3B model copied the input labels back in 15 of 24 live answers (probe 2026-11-16).
+    // Its reason is not a real Reinkeep rule; an answer that copies it is dropped by EXAMPLE_LEAK in checkExplanation.
+    { role: "user", content: EXAMPLE_FACTS },
+    { role: "assistant", content: EXAMPLE_ANSWER },
     { role: "user", content: facts.join("\n") },
   ];
 }
+
+const EXAMPLE_FACTS = [
+  "Decision: REVIEW",
+  `Meaning: ${MEANING.REVIEW}`,
+  "Reason (EXAMPLE_ONLY): The recipient address is on the watch list you set.",
+].join("\n");
+const EXAMPLE_ANSWER = "A person needs to look at this payment and decide before the agent pays. The recipient address is on the watch list you set.";
 
 // Builds the explainer for a worker that has the AI binding. Never throws: every failure returns the rules text.
 export function aiExplainer(ai: AiRunner, opts: { timeoutMs?: number; model?: string; budget?: AiBudget } = {}): Explainer {

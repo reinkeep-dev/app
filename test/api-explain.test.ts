@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { aiExplainer, checkExplanation, EXPLAIN_MODEL, EXPLAIN_TIMEOUT_MS, type AiRunner } from "../api/src/explain.ts";
+import { aiExplainer, checkExplanation, EXPLAIN_MODEL, EXPLAIN_TIMEOUT_MS, factLines, type AiRunner } from "../api/src/explain.ts";
 import { createHandler } from "../api/src/http-handler.ts";
 import { MemoryGateStore } from "../api/src/gate-store.ts";
 import type { GateDeps } from "../api/src/gate-service.ts";
@@ -116,7 +116,7 @@ test("explanation is present on ALLOW, REVIEW and BLOCK, and the decision is not
 
 test("a checked token adds its facts to the prompt", async () => {
   let seen = "";
-  const ai = fake(async (_m, o) => ((seen = o.messages[1]!.content), { response: "Okay." }));
+  const ai = fake(async (_m, o) => ((seen = o.messages.at(-1)!.content), { response: "Okay." })); // the real facts are the last message
   const sheet = { is_contract: true, is_proxy: false, has_pause: false, has_blacklist: false, has_upgrade: false, mint_with_live_owner: true, seen_liquidity_usd: 250, ticker_clone_of_older: null };
   await app({ explain: aiExplainer(ai), tokenFacts: async () => sheet })({ ...allow, token: "0x00000000000000000000000000000000000000b2" });
   assert.match(seen, /mint_with_live_owner: true/);
@@ -151,9 +151,36 @@ test("opinions about the size of the amount are dropped", async () => {
 test("the model is told what the decision means and that nothing is paid yet", async () => {
   let seen = "";
   await withAi(fake(async (_m, o) => ((seen = o.messages.map((m) => m.content).join("\n")), { response: "Fine." })))(allow);
-  assert.match(seen, /Meaning: the agent may go ahead/);
-  assert.match(seen, /Nothing has been paid yet/);
+  assert.match(seen, /Meaning: every rule passed, so the agent is cleared to make this payment/);
+  assert.match(seen, /No money has moved yet/);
   assert.match(seen, /BEFORE any payment/);
+});
+
+// Root cause of most dropped AI notes (live probe 2026-11-16: 7 of 24 kept): the 3B model repeats the Meaning line word
+// for word, and three of those lines contained words the guard drops ("go ahead and", "should not be bought",
+// "has been paid"). Every Meaning sentence must survive the guard on its own.
+test("every Meaning sentence passes the guard, for payments and token checks", () => {
+  for (const kind of [undefined, "token_check"] as const) {
+    for (const decision of ["ALLOW", "REVIEW", "BLOCK"] as const) {
+      const facts = factLines({ decision, reasons: [], kind });
+      const meaning = facts.find((l) => l.startsWith("Meaning: "))!.slice("Meaning: ".length);
+      const sentence = meaning[0].toUpperCase() + meaning.slice(1);
+      assert.equal(checkExplanation(sentence, facts), sentence, `${kind ?? "payment"} ${decision}: ${sentence}`);
+    }
+  }
+});
+
+test("the model gets one worked example and is told not to copy labels", async () => {
+  let messages: { role: string; content: string }[] = [];
+  await withAi(fake(async (_m, o) => ((messages = o.messages), { response: "Fine." })))(allow);
+  assert.deepEqual(messages.map((m) => m.role), ["system", "user", "assistant", "user"]);
+  assert.match(messages[0].content, /never copy a label such as 'Decision:'/);
+  assert.match(messages[3].content, /^Decision: ALLOW/); // the real facts come last
+});
+
+test("the worked example's reason copied into a real answer is dropped (it would be an invented reason)", async () => {
+  const r = await withAi(says("A person needs to look at this. The recipient address is on the watch list you set."))(allow);
+  assert.equal(r.data.explanation.source, "rules");
 });
 
 test("an ALLOW with no reasons tells the model so (no invented reason)", async () => {
