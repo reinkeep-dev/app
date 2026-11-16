@@ -1,7 +1,7 @@
 // The AI Judge: a second opinion on a REVIEW, asked for with `judge: true` on POST /api/v1/gate.
 // Advisory only. The decision in the receipt stays what the rules said (REVIEW); the judgement rides along inside the
 // signed body, so anyone can prove what the model said, but it never turns a REVIEW into ALLOW or BLOCK.
-// Why not let it decide (Actuary has a "resolve" mode): the rules are the product, a model can be wrong or talked
+// Why not let it decide: the rules are the product, a model can be wrong or talked
 // round, and an agent that wants the lean can act on it itself, knowing it is a model's opinion.
 //
 // Model: Llama 3.3 70B on Workers AI, in JSON mode (response_format json_schema; the answer arrives as an object, or

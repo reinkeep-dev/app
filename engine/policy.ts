@@ -3,7 +3,7 @@
 // so 1 unit = 1e-6 USD and no price feed is needed.
 
 export const ROBINHOOD_CHAIN = "eip155:4663";
-// USDG on Robinhood Chain, per Wafermap docs (wafermap.xyz/docs#networks), 9 Nov 2026.
+// USDG on Robinhood Chain (address checked 9 Nov 2026).
 export const USDG_ROBINHOOD = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
 
 export type PaymentRequest = {

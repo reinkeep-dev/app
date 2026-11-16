@@ -1,5 +1,5 @@
 // Pay for a Mandate in the Reinkeep token at half price; those tokens are burned (sent to 0x...dEaD).
-// Same flow as Actuary's "pay a Mandate in $ACTUARY": the buyer approves Permit2 once, signs a PermitTransferFrom with
+// Flow: the buyer approves Permit2 once, signs a PermitTransferFrom with
 // our burner wallet as spender, and we submit Permit2.permitTransferFrom(to = dead) ourselves, paying the gas.
 //
 // Off until the owner sets, after the token launches:
