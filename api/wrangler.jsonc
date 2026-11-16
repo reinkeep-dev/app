@@ -22,8 +22,12 @@
   "preview_urls": false,
   "observability": { "enabled": true },
 
-  // Wallet that receives paid gate calls; must be the wallet registered as the Priors merchant (public address).
-  "vars": { "X402_PAY_TO": "0x759Cf0e19d45c1dCA28977703b69Fd93a3f6a136" },
+  // X402_PAY_TO: wallet that receives paid gate calls; must be the wallet registered as the Priors merchant (public address).
+  // AI_DAILY_NEURONS: Workers AI neurons this worker may spend per UTC day (src/ai-budget.ts). The account gets 10,000
+  // free a day and is on Workers Paid, so past 10,000 Cloudflare bills. Forge402's AI is off since 2026-11-16, so this
+  // is the only AI spender; 1,000 is the owner's pick (booked at the worst case, ~170 notes a day; real use ~1.5 each).
+  // Over it the note uses the rules text and the judge is "unavailable".
+  "vars": { "X402_PAY_TO": "0x759Cf0e19d45c1dCA28977703b69Fd93a3f6a136", "AI_DAILY_NEURONS": "1000" },
 
   // Read the token facts the collector has stored (same database as collector/wrangler.jsonc).
   "d1_databases": [
@@ -34,8 +38,8 @@
     }
   ],
 
-  // Workers AI (free allowance): writes the short plain-English note on each gate answer (src/explain.ts). Optional;
-  // without this binding the note is built from the rules. The AI never decides anything.
+  // Workers AI: writes the short plain-English note on each gate answer (src/explain.ts) and the AI Judge (src/judge.ts),
+  // both capped by AI_DAILY_NEURONS. Optional; without this binding the note is built from the rules. The AI never decides anything.
   "ai": { "binding": "AI" },
 
   // Payer history: one Durable Object per payer address (class PayerLedger in src/worker.ts). SQLite-backed, which

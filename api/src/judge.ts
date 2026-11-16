@@ -8,10 +8,12 @@
 // a string on some runtimes). Id and JSON-mode support from https://developers.cloudflare.com/workers-ai/features/json-mode/
 // (checked 2026-11-11). Every failure, timeout or answer outside the schema gives null: no judgement, never a guess.
 import type { Decision } from "./receipt-signing.ts";
-import { factLines, type AiRunner, type ExplainInput } from "./explain.ts";
+import { factLines, promptChars, type AiRunner, type ExplainInput } from "./explain.ts";
+import { mayCallAi, neuronCeiling, type AiBudget } from "./ai-budget.ts";
 
 export const JUDGE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const JUDGE_TIMEOUT_MS = 8000;
+const JUDGE_MAX_TOKENS = 300;
 const NOTE_MAX_CHARS = 400;
 const MAX_CITES = 6;
 
@@ -92,16 +94,19 @@ function prompt(input: ExplainInput): { role: string; content: string }[] {
 }
 
 // Builds the judge for a worker with the AI binding. Never throws.
-export function aiJudge(ai: AiRunner, opts: { timeoutMs?: number; model?: string } = {}): Judge {
+export function aiJudge(ai: AiRunner, opts: { timeoutMs?: number; model?: string; budget?: AiBudget } = {}): Judge {
   const model = opts.model ?? JUDGE_MODEL;
   const timeoutMs = opts.timeoutMs ?? JUDGE_TIMEOUT_MS;
   return async (input) => {
+    const messages = prompt(input);
+    // Today's AI budget used up (ai-budget.ts): no judgement ("unavailable"), and no neurons spent.
+    if (!(await mayCallAi(opts.budget, neuronCeiling(model, promptChars(messages), JUDGE_MAX_TOKENS)))) return null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const slow = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
       });
-      const out = await Promise.race([ai.run(model, { messages: prompt(input), max_tokens: 300, response_format: { type: "json_schema", json_schema: SCHEMA } }), slow]);
+      const out = await Promise.race([ai.run(model, { messages, max_tokens: JUDGE_MAX_TOKENS, response_format: { type: "json_schema", json_schema: SCHEMA } }), slow]);
       const raw = typeof out === "object" && out !== null ? (out as { response?: unknown }).response : undefined;
       return checkJudgement(raw, input, model);
     } catch (err) {
