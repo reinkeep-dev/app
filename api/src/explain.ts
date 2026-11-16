@@ -4,6 +4,7 @@
 // or when the model is slow, fails, or says something we do not let through.
 import type { TokenFactSheet } from "../../engine/policy.ts";
 import type { Decision } from "./receipt-signing.ts";
+import { mayCallAi, neuronCeiling, type AiBudget } from "./ai-budget.ts";
 
 // Small, fast instruct model on the Workers AI free allowance (10,000 neurons a day shared by all models).
 // Id and run shape (env.AI.run(model, { messages, max_tokens }) -> { response }) taken from
@@ -11,6 +12,10 @@ import type { Decision } from "./receipt-signing.ts";
 export const EXPLAIN_MODEL = "@cf/meta/llama-3.2-3b-instruct";
 export const EXPLAIN_TIMEOUT_MS = 2500;
 export const EXPLAIN_MAX_CHARS = 320;
+export const EXPLAIN_MAX_TOKENS = 100;
+
+// Characters sent to the model, for the neuron ceiling in ai-budget.ts.
+export const promptChars = (messages: { content: string }[]): number => messages.reduce((n, m) => n + m.content.length, 0);
 
 export type Explanation = { text: string; source: "ai" | "rules"; model?: string };
 export type ExplainInput = {
@@ -109,18 +114,21 @@ function prompt(facts: string[]): { role: string; content: string }[] {
 }
 
 // Builds the explainer for a worker that has the AI binding. Never throws: every failure returns the rules text.
-export function aiExplainer(ai: AiRunner, opts: { timeoutMs?: number; model?: string } = {}): Explainer {
+export function aiExplainer(ai: AiRunner, opts: { timeoutMs?: number; model?: string; budget?: AiBudget } = {}): Explainer {
   const model = opts.model ?? EXPLAIN_MODEL;
   const timeoutMs = opts.timeoutMs ?? EXPLAIN_TIMEOUT_MS;
   return async (input) => {
     const fallback = rulesExplanation(input);
     const facts = factLines(input);
+    const messages = prompt(facts);
+    // Today's AI budget used up (ai-budget.ts): the rules text, and no neurons spent.
+    if (!(await mayCallAi(opts.budget, neuronCeiling(model, promptChars(messages), EXPLAIN_MAX_TOKENS)))) return fallback;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const slow = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
       });
-      const out = await Promise.race([ai.run(model, { messages: prompt(facts), max_tokens: 100 }), slow]);
+      const out = await Promise.race([ai.run(model, { messages, max_tokens: EXPLAIN_MAX_TOKENS }), slow]);
       const raw = typeof out === "object" && out !== null ? (out as { response?: unknown }).response : undefined;
       const text = checkExplanation(raw, facts);
       return text ? { text, source: "ai", model } : fallback;

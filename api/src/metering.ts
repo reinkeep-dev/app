@@ -289,7 +289,8 @@ function meterVerdict(req: Request, address: string, ip: string, env: MeterEnv, 
   });
 }
 
-// One per caller IP (and one more per IP for token checks, named "verdict:" + ip). Storage: { day: "YYYY-MM-DD" (UTC), count }.
+// One per caller IP (and one more per IP for token checks, named "verdict:" + ip), plus one named "ai-neurons" for the
+// daily Workers AI budget (ai-budget.ts, n = neurons of one call). Storage: { day: "YYYY-MM-DD" (UTC), count }.
 export class FreeTier {
   private storage: { get(k: string): Promise<any> | any; put(k: string, v: any): Promise<void> | void };
   private tail: Promise<unknown> = Promise.resolve();
@@ -306,7 +307,7 @@ export class FreeTier {
       return Number.isInteger(v) && v >= 1 ? Math.min(v, max) : fallback;
     };
     const limit = whole("limit", FREE_CALLS_PER_DAY, 10_000);
-    const n = whole("n", 1, 100);
+    const n = whole("n", 1, 10_000); // up to the largest limit, so one AI call's neurons are never cut short
     const step = this.tail.then(async () => {
       const day = new Date(Date.now()).toISOString().slice(0, 10);
       const cur = (await this.storage.get("count")) as { day: string; count: number } | undefined;

@@ -20,6 +20,7 @@ import { createRpcClient } from "../../collector/src/contract-facts.ts";
 import { D1CollectorStore } from "../../collector/src/d1-store.ts";
 import { aiExplainer, type AiRunner } from "./explain.ts";
 import { aiJudge } from "./judge.ts";
+import { counterBudget, dailyLimit } from "./ai-budget.ts";
 import { holderBalance, holderCheck, holderConfig } from "./holder.ts";
 import { burnConfig, createTokenBurn } from "./token-burn.ts";
 import { StorageGateStore, type GateStore, type LedgerStorage } from "./gate-store.ts";
@@ -37,7 +38,7 @@ import { handleMandates, isMandateRoute, type MandateNamespace } from "./mandate
 // The parts of the Durable Object API used here (typed locally so the Node tests and tsc need no Cloudflare types).
 type PayerStub = { fetch(req: Request): Promise<Response> };
 type PayerNamespace = { idFromName(name: string): unknown; get(id: unknown): PayerStub };
-type Env = MeterEnv & { REINKEEP_SIGNER_KEY?: string; RPC_URL?: string; DB?: D1Like; PAYER?: PayerNamespace; AI?: AiRunner; MANDATES?: MandateNamespace; RESEND_API_KEY?: string; MAIL_FROM?: string };
+type Env = MeterEnv & { REINKEEP_SIGNER_KEY?: string; RPC_URL?: string; DB?: D1Like; PAYER?: PayerNamespace; AI?: AiRunner; AI_DAILY_NEURONS?: string; MANDATES?: MandateNamespace; RESEND_API_KEY?: string; MAIL_FROM?: string };
 // What the Workers runtime hands every request (and every Durable Object): only waitUntil is used.
 type Ctx = { waitUntil?: (p: Promise<unknown>) => void };
 const runOf = (ctx?: Ctx): RunContext => ({ waitUntil: ctx?.waitUntil ? (p) => ctx.waitUntil!(p) : undefined });
@@ -59,10 +60,12 @@ function buildHandler(env: Env, key: string, store?: GateStore): (req: Request, 
   const rpc = chainRpc(env);
   const collector = env.DB ? new D1CollectorStore(env.DB) : undefined;
   const tokenFacts = factsLive({ rpc, now: Date.now, store: collector });
+  // Both AI paths share one daily neuron budget (ai-budget.ts, AI_DAILY_NEURONS, default 1500), counted in a FreeTier object.
+  const budget = env.FREE ? counterBudget(env.FREE, dailyLimit(env.AI_DAILY_NEURONS)) : undefined;
   // Short AI note on every answer when the AI binding exists (wrangler.jsonc "ai"); otherwise the rules text (explain.ts).
-  const explain = env.AI ? aiExplainer(env.AI) : undefined;
+  const explain = env.AI ? aiExplainer(env.AI, { budget }) : undefined;
   // AI Judge, only when a caller asks on a REVIEW (judge.ts). Same binding, bigger model.
-  const judge = env.AI ? aiJudge(env.AI) : undefined;
+  const judge = env.AI ? aiJudge(env.AI, { budget }) : undefined;
   return createHandler({ account: privateKeyToAccount(key as `0x${string}`), now: Date.now, store, tokenFacts, explain, judge, receipts: env.DB ? new D1ReceiptStore(env.DB) : undefined, collector });
 }
 
