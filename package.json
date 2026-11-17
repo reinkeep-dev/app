@@ -1,7 +1,7 @@
 {
   "name": "reinkeep",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "Pre-trade gate for AI agents on Robinhood Chain: token facts plus spending rules, one answer, a receipt you can re-check.",
   "scripts": {
