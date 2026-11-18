@@ -9,14 +9,19 @@ import roadmap from '@data/roadmap.json'
 // The "Next" cards below come from the roadmap file (state "next"), the same file the old site reads, so the two
 // never disagree. They have no link: nothing to open yet.
 // `on`: where a person can use it. 'site' = a page on reinkeep.xyz. 'agents' = only through the API and MCP, no page yet.
-type Tool = { n: string; title: string; text: string; sticker: string; where: string; on: 'site' | 'agents'; to?: string; href?: string }
+// `opens`: what a new-tab link opens, for screen readers. Default: the agent guide.
+type Tool = { n: string; title: string; text: string; sticker: string; where: string; on: 'site' | 'agents'; to?: string; href?: string; opens?: string }
+
+// A real BLOCK receipt from the live gate (2026-11-17). Paid to Reinkeep's own address, no personal data. Receipts are
+// never deleted, so this page stays up.
+const SAMPLE_RECEIPT = `${GATE}/r/rk_221e9ffc97937a0c`
 
 const LIVE: Tool[] = [
   { n: 'T-01', title: 'Check a token', on: 'site', sticker: 'sticker-question', where: '/check', to: '/check', text: 'Paste an address. Contract powers, liquidity seen, ticker copies, and the rule each one trips.' },
   { n: 'T-02', title: 'Gate', on: 'site', sticker: 'keep-allow', where: '/gate', to: '/gate', text: 'Write a payment and a policy, run it on the live gate, keep the signed receipt.' },
   { n: 'T-03', title: 'Verdict', on: 'agents', sticker: 'sticker-check', where: 'GET /verdict/{address}', href: `${GATE}/llms.txt`, text: 'Token rules only, no payment, no receipt. 60 free a day per caller.' },
   { n: 'T-04', title: 'Batch', on: 'agents', sticker: 'sticker-dots', where: 'POST /gate/batch', href: `${GATE}/llms.txt`, text: 'One payment against up to 10 tokens. One answer and one signed receipt per token.' },
-  { n: 'T-05', title: 'Share a receipt', on: 'site', sticker: 'sticker-receipt', where: '/r/{id}', href: `${GATE}/llms.txt`, text: 'Every signed answer gets a page a person can open, with a fresh signature check.' },
+  { n: 'T-05', title: 'Share a receipt', on: 'site', sticker: 'sticker-receipt', where: 'See a real receipt', href: SAMPLE_RECEIPT, opens: 'a real receipt page', text: 'Every signed answer gets a page a person can open, with a fresh signature check.' },
   { n: 'T-06', title: 'Status', on: 'site', sticker: 'sticker-shield', where: '/status', to: '/status', text: 'Signer, database, chain node, payments and AI: which are up right now.' },
   { n: 'T-07', title: 'Watch held tokens', on: 'agents', sticker: 'keep-review', where: 'POST /mandates', href: `${GATE}/llms.txt`, text: 'After you buy, the gate re-reads the contract every 30 minutes for 7 days and signs exit, watch or hold.' },
   { n: 'T-08', title: 'Pre-mortem', on: 'site', sticker: 'sticker-bolt', where: '/premortem', to: '/premortem', text: 'For builders: describe a launch, see the answer agents will get and the risks with fixes.' },
@@ -70,7 +75,7 @@ function ToolCard({ t }: { t: Tool }) {
         </Link>
       ) : (
         <a href={t.href} target="_blank" rel="noopener" className={linkClass}>
-          {t.where} →<span className="sr-only"> (opens the agent guide in a new tab)</span>
+          {t.where} →<span className="sr-only"> (opens {t.opens ?? 'the agent guide'} in a new tab)</span>
         </a>
       )}
     </article>

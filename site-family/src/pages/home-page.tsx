@@ -41,8 +41,8 @@ export default function HomePage() {
           </ScrollReveal>
         </div>
       </section>
-      <ToolsSection />
       <FeatureBand />
+      <ToolsSection />
       <FaqSection />
     </>
   )

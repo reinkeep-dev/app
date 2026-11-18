@@ -3,7 +3,7 @@ import limits from '@data/limits.json'
 
 // Answers are the project's own limits (../site/data/limits.json) in question form. Nothing beyond them.
 const FAQ = [
-  { q: 'Is Reinkeep AI audited?', a: limits[0] },
+  { q: 'Is it safe to use with real money?', a: limits[0] },
   { q: 'Does the agent have to ask the gate?', a: limits[1] },
   { q: 'Can a clever agent walk around it?', a: limits[2] },
   { q: 'Does it check the token I am buying?', a: limits[3] },
