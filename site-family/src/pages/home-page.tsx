@@ -5,14 +5,13 @@ import { HowItWorksSection } from '@/sections/how-it-works-section'
 import { PolicyReceiptSection } from '@/sections/policy-receipt-section'
 import { ToolsSection } from '@/sections/tools-section'
 import { FeatureBand } from '@/sections/feature-band'
-import { RoadmapSection } from '@/sections/roadmap-section'
 import { FaqSection } from '@/sections/faq-section'
 import { GateDemo } from '@/features/gate/gate-demo'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import { SITE_PAGES } from '@/lib/site-pages'
 
-// Section order follows a feature tour (agents, how it works, rules and receipts, every tool, roadmap), in the
+// Section order follows a feature tour (agents, how it works, rules and receipts, every tool and what is next), in the
 // Family-style look. Every claim is something the live gate does; what is not built sits under "Not yet".
 export default function HomePage() {
   useDocumentTitle(SITE_PAGES.home.title)
@@ -44,7 +43,6 @@ export default function HomePage() {
       </section>
       <ToolsSection />
       <FeatureBand />
-      <RoadmapSection />
       <FaqSection />
     </>
   )

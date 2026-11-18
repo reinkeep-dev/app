@@ -2,11 +2,12 @@ import { Link } from 'react-router'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import { SiteSticker } from '@/components/site-sticker'
 import { GATE } from '@/features/gate-tool/gate-api'
-import { cn } from '@/lib/utils'
+import roadmap from '@data/roadmap.json'
 
 // Everything Reinkeep offers, live or not. T-01..T-06 answered live on 2026-11-12; T-07..T-10 are built and go live
 // with the next API deploy (deploy the API and this page together).
-// "Not yet" items say what they wait for, so nobody reads them as shipped.
+// The "Next" cards below come from the roadmap file (state "next"), the same file the old site reads, so the two
+// never disagree. They have no link: nothing to open yet.
 // `on`: where a person can use it. 'site' = a page on reinkeep.xyz. 'agents' = only through the API and MCP, no page yet.
 type Tool = { n: string; title: string; text: string; sticker: string; where: string; on: 'site' | 'agents'; to?: string; href?: string }
 
@@ -23,13 +24,30 @@ const LIVE: Tool[] = [
   { n: 'T-10', title: 'AI second opinion', on: 'agents', sticker: 'sticker-sparkle', where: 'judge: true', href: `${GATE}/llms.txt`, text: 'On a REVIEW, a larger model gives its lean with the facts it rests on. Advice only: the rules decide.' },
 ]
 
-const NOT_YET: { title: string; text: string }[] = [
-  { title: 'Holder price', text: 'Half price for holders of the Reinkeep token. Built, switched on when the token launches.' },
-  { title: 'Watch page', text: 'Paste a token you hold and follow its checks for 7 days, with an optional email. Agents can do this today.' },
-  { title: 'Token autopsy', text: 'What happened to one token in its first day.' },
-]
+const NEXT = roadmap
+  .filter((r) => r.state !== 'live')
+  .map((r, i) => ({ n: `N-${String(i + 1).padStart(2, '0')}`, title: r.title, text: r.text, sticker: (r as { sticker?: string }).sticker ?? 'sticker-star' }))
 
 const linkClass = 'mt-1 inline-flex min-h-10 items-center font-mono text-[13px] text-ink underline decoration-hair underline-offset-4 outline-none hover:decoration-ink focus-visible:ring-2 focus-visible:ring-ink'
+
+function NextCard({ t }: { t: (typeof NEXT)[number] }) {
+  return (
+    <article className="flex h-full flex-col rounded-2xl border border-dashed border-hair p-6">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[12px] font-semibold">
+          <span className="font-mono text-ink/65">{t.n}</span>
+          <span className="ml-2 text-ink/65">Next</span>
+        </p>
+        <span aria-hidden="true" className="-mr-1 -mt-1 shrink-0">
+          <SiteSticker name={t.sticker} size={48} />
+        </span>
+      </div>
+      <h3 className="mt-4 text-[20px] font-semibold tracking-tight">{t.title}</h3>
+      <p className="mt-2 flex-1 text-[15px] leading-relaxed text-ink/65">{t.text}</p>
+      <p className="mt-4 text-[13px] font-medium text-ink/65">Not live yet</p>
+    </article>
+  )
+}
 
 function ToolCard({ t }: { t: Tool }) {
   return (
@@ -65,7 +83,7 @@ export function ToolsSection() {
       <ScrollReveal>
         <p className="text-[14px] font-semibold text-sky">What you can use</p>
         <h2 id="tools-title" className="mt-3 text-[34px] font-semibold leading-tight sm:text-[44px]">Every tool, and where to open it.</h2>
-        <p className="mt-3 max-w-[520px] text-[17px] text-ink/65">Ten tools today. Six open right here on the website; four are for agents, through the API and MCP. The rest are listed below.</p>
+        <p className="mt-3 max-w-[520px] text-[17px] text-ink/65">Ten tools today. Six open right here on the website; four are for agents, through the API and MCP. What comes next is listed below.</p>
       </ScrollReveal>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {LIVE.map((t, i) => (
@@ -75,16 +93,16 @@ export function ToolsSection() {
         ))}
       </div>
       <ScrollReveal>
-        <h3 className="mt-14 text-[14px] font-semibold text-ink/65">Not yet</h3>
-        <ul className="mt-3 divide-y divide-hair border-y border-hair">
-          {NOT_YET.map((t) => (
-            <li key={t.title} className={cn('grid gap-1 py-4 sm:grid-cols-[220px_1fr] sm:gap-6')}>
-              <span className="text-[16px] font-medium text-ink/70">{t.title}</span>
-              <span className="text-[15px] text-ink/65">{t.text}</span>
-            </li>
-          ))}
-        </ul>
+        <h3 className="mt-16 text-[24px] font-semibold tracking-tight">Next</h3>
+        <p className="mt-2 max-w-[520px] text-[15px] text-ink/65">Being built or planned. None of these are live yet.</p>
       </ScrollReveal>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {NEXT.map((t, i) => (
+          <ScrollReveal key={t.n} delay={(i % 3) * 0.06} className="h-full">
+            <NextCard t={t} />
+          </ScrollReveal>
+        ))}
+      </div>
     </section>
   )
 }
