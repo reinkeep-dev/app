@@ -24,7 +24,7 @@ export const SITE_PAGES = {
     path: '/', slug: 'index', art: 'home',
     title: 'Reinkeep AI: the pre-trade gate for AI agents',
     card: 'Your agent pays.\nYou hold the reins.',
-    description: 'Before your AI agent pays on Robinhood Chain, Reinkeep checks your rules and answers ALLOW, REVIEW or BLOCK with a signed receipt. 25 free checks a day. Reviewed by our team, no outside audit yet.',
+    description: 'Before your AI agent pays on Robinhood Chain, Reinkeep checks your rules and answers ALLOW, REVIEW or BLOCK with a signed receipt. 25 free checks a day. Reviewed by our team.',
   },
   gate: {
     path: '/gate', slug: 'gate', art: 'gate', title: pageTitle('Gate'),

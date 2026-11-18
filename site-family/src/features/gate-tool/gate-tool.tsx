@@ -145,7 +145,7 @@ export function GateTool() {
         <button type="submit" disabled={loading} className="mt-6 min-h-12 w-full rounded-full bg-ink px-6 text-[15px] font-medium text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 active:scale-[0.97] disabled:opacity-60 sm:w-auto">
           {loading ? 'Running the gate…' : 'Run the Gate'}
         </button>
-        <p className="mt-3 text-[13px] text-ink/65">25 free checks a day from your connection. Rules decide. Team-reviewed, no outside audit yet.</p>
+        <p className="mt-3 text-[13px] text-ink/65">25 free checks a day from your connection. Rules decide. Team-reviewed.</p>
       </form>
 
       <div ref={resultRef} tabIndex={-1} aria-live="polite" aria-busy={loading} className="min-w-0 outline-none lg:sticky lg:top-24">

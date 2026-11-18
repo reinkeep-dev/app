@@ -201,7 +201,7 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
 
       <Section id="limits" title="Limits">
         <ul className="list-disc space-y-1.5 pl-5 text-[15px]">
-          <li><strong className="font-semibold text-ink">Reviewed by our team, no outside audit yet.</strong> An answer is rule-based, not a guarantee and not financial advice. Do not use it with money you cannot lose.</li>
+          <li><strong className="font-semibold text-ink">Reviewed by our team.</strong> An answer is rule-based, not a guarantee and not financial advice. Do not use it with money you cannot lose.</li>
           <li>Unknown never passes. A token the collector never saw, or a fact that could not be read, is a REVIEW.</li>
           <li>Without a <code className={code}>payer</code>, the history rules (daily cap, duplicates, rate limit, new recipient) do not run.</li>
           <li>Token facts cover tokens the collector saw. A token read live has unknown liquidity, so it is a REVIEW at best.</li>

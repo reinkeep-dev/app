@@ -201,7 +201,7 @@ recovers the signer with `recoverTypedDataAddress`. Receipts record a moment; th
   The free tier is the only abuse limit; there is no other rate limit.
 - **Token facts**: the collector's data when it has the token (D1 bound as `DB`), otherwise the contract is read live
   from `RPC_URL`. Liquidity is then unknown, so such a token is a REVIEW at best.
-- **Reviewed by our team, no outside audit yet.** Do not use it with money you cannot lose.
+- **Reviewed by our team.** Do not use it with money you cannot lose.
 
 ## Paying (x402 v2)
 
