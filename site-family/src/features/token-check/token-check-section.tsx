@@ -116,7 +116,7 @@ export function TokenCheckSection() {
                 </button>
               ))}
             </div>
-            <p className="mt-4 text-[13px] text-ink/65">Free, 60 checks a day. Rules decide; AI only explains.</p>
+            <p className="mt-4 text-[13px] text-ink/65">Free, 60 checks a day. Rules decide.</p>
           </form>
         </ScrollReveal>
 

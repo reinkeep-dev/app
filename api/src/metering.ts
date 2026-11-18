@@ -30,7 +30,6 @@ const GATE = "/api/v1/gate";
 const BATCH = GATE + "/batch";
 const VERDICT = "/api/v1/verdict/";
 const PREMORTEM = "/api/v1/premortem";
-const AUTOPSY = "/api/v1/autopsy/";
 const DATA_PATHS = new Set(["/api/v1/odds", "/api/v1/board", "/api/v1/radar"]);
 const PENDING_WAITS = [1000, 2000, 2000]; // ms between /settle retries
 
@@ -111,7 +110,7 @@ export async function meter(
   const ip = callerKey(req);
   if (req.method === "GET" && path === GATE + "/holder") return holderLookup(req, ip, env, deps.holderBalance);
   if (req.method === "GET" && path.startsWith(VERDICT)) return meterVerdict(req, path.slice(VERDICT.length), ip, env, deps.route);
-  if (req.method === "GET" && (DATA_PATHS.has(path) || path.startsWith(AUTOPSY))) {
+  if (req.method === "GET" && DATA_PATHS.has(path)) {
     return meterLimited(req, ip, env, deps.route, {
       name: "data", limit: DATA_CALLS_PER_DAY, code: "data_limit",
       message: `The ${DATA_CALLS_PER_DAY} free launch-data reads for today are used. Try again tomorrow (UTC).`,

@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {Keeper} from './keeper-mark';
 import {Stage} from './render-stage';
+import {useInter} from './x-profile-v3';
 
 // 3D X avatar (2026-11-12). The user's X header is a 3D brass ring with a strap; the flat avatar did not match
 // and "wasn't interesting", so the avatar is now the same 3D mark (keeper-mark.tsx), turned a little so the
@@ -93,6 +94,36 @@ export const XAvatar3DWow: React.FC = () => {
 			))}
 			{/* vignette keeps the round crop's edge dark */}
 			<AbsoluteFill style={{background: 'radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,.55) 78%)'}} />
+		</AbsoluteFill>
+	);
+};
+
+// Launch banner (1500x500, X header and DexScreener header are both 3:1). Same world as the Wow avatar: dark
+// ground, hot backlight, bloom, the 3D mark on the right; the site's headline on the left so it reads as one brand.
+export const LaunchBanner: React.FC = () => {
+	useInter();
+	const mark = <Keeper position={[0, -0.05, 0]} rotation={[0.28, -0.42, -0.08]} scale={0.9} />;
+	return (
+		<AbsoluteFill style={{backgroundColor: GROUND, overflow: 'hidden'}}>
+			<AbsoluteFill style={{background: 'radial-gradient(ellipse 34% 90% at 79% 50%, rgba(255,196,96,.38) 0%, rgba(224,140,40,.14) 35%, transparent 70%)'}} />
+			<div style={{position: 'absolute', left: 980, top: -10, width: 520, height: 520}}>
+				<AbsoluteFill style={{mixBlendMode: 'screen', filter: 'blur(22px) saturate(1.4)', opacity: 0.85}}>
+					<Stage camZ={7.6} size={[520, 520]}>{mark}</Stage>
+				</AbsoluteFill>
+				<AbsoluteFill style={{mixBlendMode: 'screen'}}>
+					<Stage camZ={7.6} size={[520, 520]}>{mark}</Stage>
+				</AbsoluteFill>
+				<Glint x={196} y={150} size={110} />
+			</div>
+			<div style={{position: 'absolute', left: 120, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', fontFamily: '"Inter Site", system-ui, sans-serif'}}>
+				<p style={{margin: 0, fontWeight: 650, fontSize: 74, lineHeight: 1.02, letterSpacing: '-0.04em', color: '#F4EFE6'}}>
+					Your agent pays.
+					<br />
+					<span style={{color: '#F2C76E'}}>You hold the reins.</span>
+				</p>
+				<p style={{margin: '26px 0 0', fontSize: 24, color: 'rgba(244,239,230,.6)'}}>Pre-trade gate for AI agents on Robinhood Chain · reinkeep.xyz</p>
+			</div>
+			<AbsoluteFill style={{background: 'linear-gradient(90deg, transparent 70%, rgba(0,0,0,.25))'}} />
 		</AbsoluteFill>
 	);
 };

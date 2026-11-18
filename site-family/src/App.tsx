@@ -15,7 +15,6 @@ const PremortemPage = lazy(() => import('@/pages/premortem-page'))
 const OddsPage = lazy(() => import('@/pages/odds-page'))
 const BoardPage = lazy(() => import('@/pages/board-page'))
 const RadarPage = lazy(() => import('@/pages/radar-page'))
-const AutopsyPage = lazy(() => import('@/pages/autopsy-page'))
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'))
 
 // One shell (nav, footer), one page per route. Home keeps the family.co-style landing sections; the tools live on their own pages.
@@ -33,7 +32,6 @@ export default function App() {
           <Route path="/board" element={<BoardPage />} />
           <Route path="/odds" element={<OddsPage />} />
           <Route path="/radar" element={<RadarPage />} />
-          <Route path="/autopsy" element={<AutopsyPage />} />
           <Route path="/launches" element={<Navigate to="/board" replace />} />
           <Route path="/premortem" element={<PremortemPage />} />
           <Route path="/docs" element={<DocsPage />} />

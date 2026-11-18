@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import { AutopsyStage } from './autopsy-stage'
 import { BoardBars } from './board-bars'
 import { OddsDots } from './odds-dots'
 import { RadarScope } from './radar-scope'
-import { DataError, fetchAutopsy, fetchBoard, fetchOdds, fetchRadar, type Autopsy, type Band, type Board, type DataFailure, type Odds, type Radar } from './launches-api'
+import { DataError, fetchBoard, fetchOdds, fetchRadar, type Band, type Board, type DataFailure, type Odds, type Radar } from './launches-api'
 
 const ERRORS: Record<DataFailure, string> = {
   not_live: 'This goes live with the next update of the gate.',
@@ -37,7 +36,6 @@ function useRead<T>(load: (signal: AbortSignal) => Promise<T>): Load<T> {
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 const pct = (v: number | null) => (v === null ? '—' : `${v}%`)
-const money = (v: number | null) => (v === null ? 'unknown' : v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }))
 const bandLabel = (b: Band, unit: '$' | '') => {
   const f = (n: number) => (unit ? `$${n.toLocaleString('en-US')}` : n.toLocaleString('en-US'))
   return b.maxUsd === null ? `${f(b.minUsd)} or more` : `${f(b.minUsd)} to ${f(b.maxUsd)}`
@@ -186,73 +184,6 @@ export function RadarPart() {
           )
         }
       </Status>
-    </Part>
-  )
-}
-
-const ADDRESS = /^0x[0-9a-fA-F]{40}$/
-const PATTERN_TONE: Record<string, string> = { still_trading: 'text-allow', liquidity_pulled: 'text-block', faded: 'text-review', never_lived: 'text-block' }
-
-export function AutopsyPart() {
-  const [value, setValue] = useState('')
-  const [state, setState] = useState<{ phase: 'idle' } | Load<Autopsy>>({ phase: 'idle' })
-  const abort = useRef<AbortController | null>(null)
-  useEffect(() => () => abort.current?.abort(), [])
-  const trimmed = value.trim()
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    if (!ADDRESS.test(trimmed)) return setState({ phase: 'error', kind: 'bad_address' })
-    abort.current?.abort()
-    const ctl = new AbortController()
-    abort.current = ctl
-    setState({ phase: 'loading' })
-    try {
-      setState({ phase: 'done', data: await fetchAutopsy(trimmed, ctl.signal) })
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') setState({ phase: 'error', kind: err instanceof DataError ? err.kind : 'failed' })
-    }
-  }
-
-  return (
-    <Part label="Autopsy">
-      <form onSubmit={submit} noValidate className="max-w-[680px]">
-        <label htmlFor="autopsy-address" className="block text-[15px] font-medium">Token address</label>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <input id="autopsy-address" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0x…" autoComplete="off" spellCheck={false} className="min-h-12 w-full min-w-0 rounded-xl bg-panel px-4 font-mono text-[15px] outline-none ring-2 ring-transparent focus-visible:ring-ink" />
-          <button type="submit" disabled={state.phase === 'loading'} className="min-h-12 shrink-0 rounded-full bg-ink px-6 text-[15px] font-medium text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 active:scale-[0.97] disabled:opacity-60">
-            {state.phase === 'loading' ? 'Looking…' : 'Look back'}
-          </button>
-        </div>
-      </form>
-      <div className="mt-6">
-        <AutopsyStage data={state.phase === 'done' ? state.data : null} loading={state.phase === 'loading'} />
-      </div>
-      <div aria-live="polite">
-        {state.phase === 'error' && <p role="status" className="max-w-[680px] rounded-2xl bg-panel p-5 text-[15px] text-ink/80">{ERRORS[state.kind]}</p>}
-        {state.phase === 'done' && (
-          <div className="max-w-[680px] rounded-2xl border border-hair bg-white p-5 shadow-sm">
-            <p className="text-[13px] font-medium text-ink/65">{state.data.symbol ?? short(state.data.token)}</p>
-            <p className={cn('mt-1 text-[28px] font-semibold first-letter:uppercase', PATTERN_TONE[state.data.pattern] ?? 'text-ink')}>{state.data.pattern.replace(/_/g, ' ')}</p>
-            <p className="mt-2 text-[15px] text-ink/80">{state.data.plain}</p>
-            <dl className="mt-4 grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-1 text-[14px]">
-              <dt className="text-ink/65" />
-              <dd className="text-ink/65">First seen</dd>
-              <dd className="text-ink/65">A day later</dd>
-              <dt className="text-ink/70">Liquidity</dt>
-              <dd className="font-mono text-[13px]">{money(state.data.firstSeen.liquidityUsd)}</dd>
-              <dd className="font-mono text-[13px]">{state.data.dayLater ? money(state.data.dayLater.liquidityUsd) : '—'}</dd>
-              <dt className="text-ink/70">Volume, 24h</dt>
-              <dd className="font-mono text-[13px]">{money(state.data.firstSeen.volumeH24Usd)}</dd>
-              <dd className="font-mono text-[13px]">{state.data.dayLater ? money(state.data.dayLater.volumeH24Usd) : '—'}</dd>
-              <dt className="text-ink/70">Swaps, 24h</dt>
-              <dd className="font-mono text-[13px]">{state.data.firstSeen.swapsH24 ?? 'unknown'}</dd>
-              <dd className="font-mono text-[13px]">{state.data.dayLater ? (state.data.dayLater.swapsH24 ?? 'unknown') : '—'}</dd>
-            </dl>
-            <p className="mt-4 text-[13px] text-ink/65">{state.data.note}</p>
-          </div>
-        )}
-      </div>
     </Part>
   )
 }

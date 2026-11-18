@@ -22,6 +22,6 @@
   { "kind": "wait", "side": "buys", "code": "token_facts_unknown", "plain": "Some facts a blocking rule needs could not be read, so a human decides." },
   { "kind": "wait", "side": "buys", "code": "token_has_pause", "plain": "The token has a pause switch: trading can be stopped." },
   { "kind": "wait", "side": "buys", "code": "token_upgradeable", "plain": "The token is a proxy or can be upgraded: its rules can change after you buy." },
-  { "kind": "wait", "side": "buys", "code": "token_ticker_copy", "plain": "An older token already uses this ticker. This one may be a copy." },
+  { "kind": "wait", "side": "buys", "code": "token_ticker_copy", "plain": "Other tokens use this ticker too. Match this address with the project's own website or X before you buy." },
   { "kind": "wait", "side": "buys", "code": "token_low_liquidity", "plain": "Under $1,000 of liquidity when we first saw it (by default)." }
 ]

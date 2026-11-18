@@ -5,8 +5,8 @@ import { GATE } from '@/features/gate-tool/gate-api'
 import { MCP_CLAUDE } from '@/features/docs/docs-snippets'
 
 // "Built for agents": the three ways an agent plugs in today, then four facts. Every number below was read from the
-// gate code on 2026-11-12 (api/src/mcp.ts = 16 tools, /api/v1/gate/pricing = 25 free, $0.01 USDG). The 16 are live only
-// once the API with mandates, pre-mortem and launch data is deployed; deploy the API together with this page.
+// gate code (api/src/mcp.ts tools, /api/v1/gate/pricing = 25 free, $0.01 USDG). test/site-claims.test.ts checks the tool
+// count against the live MCP list, so it cannot drift again (it said 16 after token_autopsy was taken down).
 const WAYS = [
   { n: '01', label: 'MCP', note: 'One line in Claude Code. Any MCP client works with the same URL.', code: MCP_CLAUDE },
   // Paths only: the full host does not fit a third of the row and three cut-off URLs look identical. Host is shown once above.
@@ -15,7 +15,7 @@ const WAYS = [
 ] as const
 
 const FACTS = [
-  { big: '16', small: 'MCP tools' },
+  { big: '15', small: 'MCP tools' },
   { big: '25', small: 'free checks a day' },
   { big: '$0.01', small: 'per call after that, USDG over x402' },
   { big: 'EIP-712', small: 'signed receipts' },

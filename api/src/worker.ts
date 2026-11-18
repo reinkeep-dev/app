@@ -9,7 +9,7 @@
 // After the token launches: HOLDER_TOKEN + HOLDER_MIN (holder price, holder.ts), BURN_TOKEN + BURN_AMOUNT + BURNER_KEY
 // (secret; mandates paid in the token at half price and burned, token-burn.ts).
 // Remote MCP (mcp.ts): POST /mcp, stateless JSON-RPC; its tools call the metered REST API above.
-// Explanation: every gate answer carries `explanation` (explain.ts), written by Workers AI (binding AI) or built from the rules.
+// Explanation: every gate answer carries `explanation` (explain.ts), always built from the rules (source "rules").
 // Receipts: every signed gate answer is also saved in D1 (receipt-store.ts, best effort via ctx.waitUntil); GET /r/{id} shows
 // one, GET /api/v1/receipts/{id} returns it. GET /api/v1/verdict/{address} is the free token check (60 per IP per day),
 // POST /api/v1/gate/batch checks up to 10 tokens, GET /api/status and /status report whether the gate is wired up.
@@ -18,7 +18,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import type { D1Like } from "../../collector/src/collector-store.ts";
 import { createRpcClient } from "../../collector/src/contract-facts.ts";
 import { D1CollectorStore } from "../../collector/src/d1-store.ts";
-import { aiExplainer, type AiRunner } from "./explain.ts";
+import type { AiRunner } from "./explain.ts";
 import { aiJudge } from "./judge.ts";
 import { counterBudget, dailyLimit } from "./ai-budget.ts";
 import { holderBalance, holderCheck, holderConfig } from "./holder.ts";
@@ -62,11 +62,11 @@ function buildHandler(env: Env, key: string, store?: GateStore): (req: Request, 
   const tokenFacts = factsLive({ rpc, now: Date.now, store: collector });
   // Both AI paths share one daily neuron budget (ai-budget.ts, AI_DAILY_NEURONS, default 1500), counted in a FreeTier object.
   const budget = env.FREE ? counterBudget(env.FREE, dailyLimit(env.AI_DAILY_NEURONS)) : undefined;
-  // Short AI note on every answer when the AI binding exists (wrangler.jsonc "ai"); otherwise the rules text (explain.ts).
-  const explain = env.AI ? aiExplainer(env.AI, { budget }) : undefined;
+  // No `explain` is passed: since 2026-11-18 every explanation is the rules text. The small model wrote things the rules
+  // never said (it told a first-time recipient was "used before"), and a filter for numbers and advice cannot catch that.
   // AI Judge, only when a caller asks on a REVIEW (judge.ts). Same binding, bigger model.
   const judge = env.AI ? aiJudge(env.AI, { budget }) : undefined;
-  return createHandler({ account: privateKeyToAccount(key as `0x${string}`), now: Date.now, store, tokenFacts, explain, judge, receipts: env.DB ? new D1ReceiptStore(env.DB) : undefined, collector });
+  return createHandler({ account: privateKeyToAccount(key as `0x${string}`), now: Date.now, store, tokenFacts, judge, receipts: env.DB ? new D1ReceiptStore(env.DB) : undefined, collector });
 }
 
 let cached: { key: string; handle: (req: Request, run?: RunContext) => Promise<Response> } | undefined;
