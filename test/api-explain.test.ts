@@ -117,7 +117,7 @@ test("explanation is present on ALLOW, REVIEW and BLOCK, and the decision is not
 test("a checked token adds its facts to the prompt", async () => {
   let seen = "";
   const ai = fake(async (_m, o) => ((seen = o.messages.at(-1)!.content), { response: "Okay." })); // the real facts are the last message
-  const sheet = { is_contract: true, is_proxy: false, has_pause: false, has_blacklist: false, has_upgrade: false, mint_with_live_owner: true, seen_liquidity_usd: 250, ticker_clone_of_older: null };
+  const sheet = { is_contract: true, is_proxy: false, has_pause: false, has_blacklist: false, has_upgrade: false, mint_with_live_owner: true, seen_liquidity_usd: 250, ticker_uses: null, ticker_clone_of_older: null };
   await app({ explain: aiExplainer(ai), tokenFacts: async () => sheet })({ ...allow, token: "0x00000000000000000000000000000000000000b2" });
   assert.match(seen, /mint_with_live_owner: true/);
   assert.match(seen, /seen_liquidity_usd: 250/);

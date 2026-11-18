@@ -8,7 +8,7 @@ import { RECEIPT_ID } from "./receipt-store.ts";
 import { missingPage, sharePage } from "./share-page.ts";
 import { verdict } from "./verdict.ts";
 import { parseDraft, premortem } from "./premortem.ts";
-import { autopsy, board, odds, radar } from "./launch-data.ts";
+import { board, odds, radar } from "./launch-data.ts";
 
 export const MAX_BODY_BYTES = 16 * 1024;
 
@@ -172,11 +172,6 @@ export function createHandler(base: GateDeps): (req: Request, run?: RunContext) 
           if (addressOf !== null && !addressOf.includes("/")) {
             route("GET");
             return json(200, await verdict(addressOf, deps));
-          }
-          const autopsyOf = path.startsWith("/api/v1/autopsy/") ? path.slice("/api/v1/autopsy/".length) : null;
-          if (autopsyOf !== null && !autopsyOf.includes("/")) {
-            route("GET");
-            return json(200, await autopsy(needData(deps), autopsyOf, deps.now()));
           }
           const receiptId = path.startsWith("/api/v1/receipts/") ? path.slice("/api/v1/receipts/".length) : null;
           if (receiptId !== null && !receiptId.includes("/")) {

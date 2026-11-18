@@ -184,7 +184,6 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
             ['launch_odds', 'How many tokens that started like this still traded a day later.'],
             ['launch_board', 'Per day: pools seen, re-checked and still trading.'],
             ['ticker_radar', 'Tickers reused by several new tokens lately.'],
-            ['token_autopsy', 'What happened to one token in its first day.'],
           ].map(([k, v]) => (
             <div key={k} className="grid gap-1 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-6">
               <dt className="font-mono text-[13.5px] text-ink">{k}</dt>
@@ -195,13 +194,9 @@ domain: { "name": "Reinkeep", "version": "1", "chainId": 4663 }`}
         <p>MCP tools advise. An agent that skips them is not stopped. Only a signer that asks the gate before it signs enforces.</p>
       </Section>
 
-      <Section id="explanation" title="AI explanation">
-        <p>The rules decide. The AI only explains. Every answer has an <code className={code}>explanation</code> of at most two short sentences for someone who is not technical.</p>
-        <ul className="list-disc space-y-1.5 pl-5 text-[15px]">
-          <li><code className={code}>source: "ai"</code>: written by Cloudflare Workers AI, model <code className={code}>@cf/meta/llama-3.2-3b-instruct</code>.</li>
-          <li><code className={code}>source: "rules"</code>: fixed text built from the decision and the reasons. Used when the model errors, takes longer than 2.5 seconds, runs over 320 characters, adds a number that is not in the facts, or uses advice wording.</li>
-        </ul>
-        <p>The decision, the reasons and the signed receipt come only from the rules. The receipt does not contain the note, so the same request gets the same receipt with or without it.</p>
+      <Section id="explanation" title="Explanation">
+        <p>Every answer has an <code className={code}>explanation</code> of at most two short sentences for someone who is not technical, with <code className={code}>source: "rules"</code>.</p>
+        <p>It is built only from the decision and the reasons, so it never says anything the rules did not find. The receipt does not contain it.</p>
       </Section>
 
       <Section id="limits" title="Limits">

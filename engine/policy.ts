@@ -29,6 +29,7 @@ export type TokenFactSheet = {
   has_upgrade: boolean | null;
   mint_with_live_owner: boolean | null;
   seen_liquidity_usd: number | null;
+  ticker_uses: number | null; // how many different tokens carry this ticker, this one included
   ticker_clone_of_older: boolean | null;
 };
 
@@ -99,7 +100,9 @@ export function evaluateToken(buying: TokenUnderTest, tokenPolicy: TokenPolicy):
     }
     if (f.has_pause === true) approve.push("token_has_pause");
     if (f.is_proxy === true || f.has_upgrade === true) approve.push("token_upgradeable");
-    if (f.ticker_clone_of_older === true) approve.push("token_ticker_copy");
+    // Any shared ticker is a REVIEW, the oldest token included: "first seen" is not "the real one" (a copy can be
+    // deployed before the launch, as with RUSHR). Which address is official needs a list, not the clock.
+    if ((f.ticker_uses ?? 0) >= 2 || f.ticker_clone_of_older === true) approve.push("token_ticker_copy");
     if (f.seen_liquidity_usd !== null && f.seen_liquidity_usd < tokenPolicy.reviewBelowLiquidityUsd) approve.push("token_low_liquidity");
   }
   return { deny, approve };

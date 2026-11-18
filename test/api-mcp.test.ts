@@ -73,12 +73,12 @@ test("ping answers an empty result", async () => {
   assert.deepEqual(data, { jsonrpc: "2.0", id: 7, result: {} });
 });
 
-test("tools/list names the sixteen tools, each with an object schema", async () => {
+test("tools/list names the fifteen tools, each with an object schema", async () => {
   const { data } = await call(fake(), rpc(2, "tools/list"));
   assert.deepEqual(data.result.tools.map((t: any) => t.name), [
     "gate_check", "verify_receipt", "get_pricing", "list_presets", "get_signer", "check_token", "get_receipt",
     "create_mandate", "get_mandate", "mandate_events", "premortem", "verify_signal",
-    "launch_odds", "launch_board", "ticker_radar", "token_autopsy",
+    "launch_odds", "launch_board", "ticker_radar",
   ]);
   for (const t of data.result.tools) {
     assert.equal(t.inputSchema.type, "object");
@@ -299,8 +299,5 @@ test("launch-data tools call the right GET paths, default the window, and pass A
   assert.match(board.content[0].text, /2026-11-10: 40 pools, 35 re-checked, still trading 18%/);
   await call(f, tool(3, "launch_board", { days: 2.5 }));
   await call(f, tool(4, "ticker_radar", { hours: 48 }));
-  const dead = (await call(f, tool(5, "token_autopsy", { address: "0x" + "a".repeat(40) }))).data.result;
-  assert.equal(dead.isError, true);
-  assert.match(dead.content[0].text, /404 token_not_collected/);
-  assert.deepEqual(urls, ["/api/v1/odds", "/api/v1/board?days=7", "/api/v1/board?days=7", "/api/v1/radar?hours=48", "/api/v1/autopsy/0x" + "a".repeat(40)]);
+  assert.deepEqual(urls, ["/api/v1/odds", "/api/v1/board?days=7", "/api/v1/board?days=7", "/api/v1/radar?hours=48"]);
 });
