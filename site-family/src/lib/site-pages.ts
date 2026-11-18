@@ -51,11 +51,6 @@ export const SITE_PAGES = {
     card: 'Spot a wave of copies early.',
     description: 'Tickers used by two or more new tokens in the last 48 hours, with the earliest token and the busiest one.',
   },
-  autopsy: {
-    path: '/autopsy', slug: 'autopsy', art: 'autopsy', title: pageTitle('Autopsy'),
-    card: 'What happened to one token in its first day.',
-    description: 'Paste a token address. See its numbers when we first saw it and a day later, and which pattern it fits: still trading, liquidity pulled, faded, or never lived.',
-  },
   premortem: {
     path: '/premortem', slug: 'premortem', art: 'premortem', title: pageTitle('Pre-mortem'),
     card: 'See what agents will see, before you launch.',

@@ -32,7 +32,7 @@
   {
     "state": "live",
     "title": "Remote MCP and agent discovery",
-    "text": "An MCP server at /mcp with 16 tools, plus llms.txt, an agent card and an OpenAPI file, so an agent can find the gate and call it on its own."
+    "text": "An MCP server at /mcp with 15 tools, plus llms.txt, an agent card and an OpenAPI file, so an agent can find the gate and call it on its own."
   },
   {
     "state": "live",
@@ -46,8 +46,8 @@
   },
   {
     "state": "live",
-    "title": "Launch odds, board, radar and autopsy",
-    "text": "From pools re-checked a day after launch. Shares appear only from 30 re-checked pools, and every answer says how much data is behind it."
+    "title": "Launch odds, board and radar",
+    "text": "A collector reads new pools every hour and re-checks each one a day after launch. It does not see every launch, so shares appear only from 30 re-checked pools and every answer says how much data is behind it."
   },
   {
     "state": "live",
@@ -55,14 +55,19 @@
     "text": "Ask for it and a larger model gives its lean with the facts it rests on, signed in the receipt. Advice only: the decision stays with the rules."
   },
   {
-    "state": "building",
-    "title": "Complete launch data",
-    "text": "The collector misses most launches when it runs on Cloudflare. It is moving to a scheduled job that reads every launch from the chain. Odds, a launch board and autopsies wait for this."
+    "state": "next",
+    "title": "Token autopsy",
+    "text": "Paste a token address and see what happened in its first day: still trading, liquidity pulled, faded or never lived, with its numbers when first seen and a day later."
   },
   {
     "state": "live",
     "title": "Watch held tokens",
     "text": "After your agent buys, the gate re-reads the token every 30 minutes for 7 days and signs an exit, watch or hold signal, with an optional signed webhook. Costs 5 calls."
+  },
+  {
+    "state": "next",
+    "title": "Watch page on the website",
+    "text": "Paste a token address you hold, add your email if you like, and see every 30-minute check for 7 days on one page. Agents can already do this through the API and MCP."
   },
   {
     "state": "next",

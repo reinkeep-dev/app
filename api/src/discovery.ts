@@ -40,7 +40,6 @@ export const ENDPOINTS: Endpoint[] = [
   { method: "GET", path: "/odds", summary: `Of the tokens that started like this (first liquidity, first swaps), how many still traded a day later. A share only from ${MIN_SAMPLE} judged pools.` },
   { method: "GET", path: "/board", summary: `Per UTC day (?days=1..${BOARD_MAX_DAYS}): pools seen, re-checked after a day, alive, dead, share still trading.` },
   { method: "GET", path: "/radar", summary: `Tickers reused by 2 or more tokens in the last ?hours=1..${RADAR_MAX_HOURS}, with the earliest and the busiest token.` },
-  { method: "GET", path: "/autopsy/{address}", summary: "What happened to one token a day after launch: still trading, liquidity pulled, faded or never lived." },
 ];
 const summaryOf = (path: string) => ENDPOINTS.find((e) => e.path === path)?.summary ?? "";
 
@@ -52,7 +51,7 @@ export function llmsTxt(): string {
   const endpoints = ENDPOINTS.map((e) => `- ${e.method} ${API}${e.path}: ${e.summary}`).join("\n");
   return `# Reinkeep AI
 
-> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide. AI only explains the answer in plain words. Reviewed by our team, no outside audit yet. Do not use it with money you cannot lose.
+> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide, and the answer is explained in plain words from the rules. Reviewed by our team, no outside audit yet. Do not use it with money you cannot lose.
 
 ## Connect
 - REST API base: ${BASE_URL}${API} (CORS open, no API key)
@@ -76,7 +75,7 @@ curl -s ${BASE_URL}${API}/gate -H 'content-type: application/json' -d '{
 }'
 \`\`\`
 The answer is \`{ id, decision, reasons[], receipt, explanation, shareUrl? }\`. \`decision\` is ALLOW, REVIEW or BLOCK. Each reason is \`{ code, plain }\`.
-\`explanation\` is optional: \`{ text, source, model? }\`. \`text\` is two short plain-English sentences. \`source\` is \`ai\` when a small Cloudflare Workers AI model wrote it (\`model\` names it) or \`rules\` when the fixed rule text is used instead. The decision always comes from the rules, never from the model. If the model errors, times out, or adds numbers or advice, you get the rule text.
+\`explanation\` is optional: \`{ text, source }\`. \`text\` is two short plain-English sentences built from the decision and the reasons. \`source\` is \`rules\`. The decision always comes from the rules.
 Act on ALLOW. Treat REVIEW as "ask a human or stop". Never pay on BLOCK.
 
 ## Endpoints (base ${API})
@@ -109,7 +108,6 @@ From our collector: every pool it saw, its numbers when first seen, and one re-c
 - GET ${API}/odds: \`byFirstLiquidityUsd[]\` and \`byFirstSwaps[]\`, each band \`{ minUsd, maxUsd, n, alive, dead, stillTradingPct }\`.
 - GET ${API}/board?days=7: one row per UTC day.
 - GET ${API}/radar?hours=24: \`waves[]\` of \`{ ticker, recentTokens, totalTokens, first, busiest }\`. "first" is the earliest token we saw with the ticker, not proof of which one is real.
-- GET ${API}/autopsy/{address}: \`{ pattern, plain, firstSeen, dayLater }\`; pattern is still_trading, liquidity_pulled, faded, never_lived, too_young, not_rechecked or unknown. 404 token_not_collected when we never saw a pool for it.
 
 ## Stored receipts and share pages
 Every signed gate answer is also stored (best effort) and carries \`shareUrl\` when storage is on: ${BASE_URL}/r/{id}, a plain page a person can open (decision, reasons, the payment checked, signature check). GET ${API}/receipts/{id} returns the stored receipt as JSON with \`valid\` and \`signer\` from a fresh signature check; 404 if unknown.
@@ -434,13 +432,6 @@ export function openApi() {
           responses: { "200": jsonOk("Ticker waves, most reused first", { type: "object", properties: { waves: { type: "array", items: { type: "object" } }, coverage: ref("Coverage") } }), ...errors([400, 429, 503]) },
         },
       },
-      [API + "/autopsy/{address}"]: {
-        get: {
-          operationId: "autopsy", summary: summaryOf("/autopsy/{address}"),
-          parameters: [{ name: "address", in: "path", required: true, schema: str({ pattern: "^0x[0-9a-fA-F]{40}$" }) }],
-          responses: { "200": jsonOk("The token's first day", { type: "object", properties: { pattern: { type: "string", enum: ["still_trading", "liquidity_pulled", "faded", "never_lived", "too_young", "not_rechecked", "unknown"] }, plain: str(), firstSeen: { type: "object" }, dayLater: { oneOf: [{ type: "object" }, { type: "null" }] } } }), ...errors([400, 404, 429, 503]) },
-        },
-      },
       [API + "/premortem"]: {
         post: {
           operationId: "premortem",
@@ -591,7 +582,7 @@ export function openApi() {
           required: ["text", "source"],
           properties: {
             text: str(),
-            source: { type: "string", enum: ["ai", "rules"], description: "ai: written by a small Cloudflare Workers AI model. rules: fixed rule text (also used when the model errors, times out, or adds numbers or advice)." },
+            source: { type: "string", enum: ["ai", "rules"], description: "rules: fixed text built from the decision and the reasons. (ai is no longer sent.)" },
             model: str({ description: "Model name, when source is ai" }),
           },
         },

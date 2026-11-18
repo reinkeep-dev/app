@@ -107,11 +107,13 @@ test("radar: tickers reused by 2+ recent tokens, most-used first, with the earli
   await assert.rejects(radar(store, 0, NOW), (e: any) => e.code === "invalid_hours");
 });
 
-test("HTTP: the four tools answer; bad query is 400; no database is a clear 503", async () => {
+test("HTTP: the three tools answer; bad query is 400; no database is a clear 503", async () => {
   const store = bench();
   const { token } = await launch(store, { created: NOW - 2 * DAY, first: { liq: 5 }, later: { liq: 5, vol: 100, alive: true } });
   const app = makeApp({ collector: store });
-  for (const p of ["/api/v1/odds", "/api/v1/board?days=3", "/api/v1/radar?hours=48", `/api/v1/autopsy/${token}`]) assert.equal((await app.send("GET", p)).status, 200, p);
+  for (const p of ["/api/v1/odds", "/api/v1/board?days=3", "/api/v1/radar?hours=48"]) assert.equal((await app.send("GET", p)).status, 200, p);
+  // Autopsy is taken down (2026-11-18, it called a still-trading token "liquidity pulled"): the route must stay gone.
+  assert.equal((await app.send("GET", `/api/v1/autopsy/${token}`)).status, 404);
   assert.equal((await app.send("GET", "/api/v1/board?days=abc")).status, 400);
   assert.equal((await app.send("POST", "/api/v1/odds", {})).status, 405);
   const bare = makeApp();
