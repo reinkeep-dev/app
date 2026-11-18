@@ -22,7 +22,6 @@ const FACTS: { key: keyof TokenFacts; label: string; good: boolean; hard: boolea
   { key: 'has_pause', label: 'Can pause transfers', good: false, hard: false },
   { key: 'is_proxy', label: 'Is a proxy', good: false, hard: false },
   { key: 'has_upgrade', label: 'Code can be upgraded', good: false, hard: false },
-  { key: 'ticker_clone_of_older', label: 'Copies an older ticker', good: false, hard: true },
 ]
 
 function toLines(facts: TokenFacts): Line[] {
@@ -32,6 +31,12 @@ function toLines(facts: TokenFacts): Line[] {
     const ok = v === good
     return { key, label, value: v ? 'Yes' : 'No', mark: ok ? 'tick' : hard ? 'cross' : 'hold' }
   })
+  const uses = facts.ticker_uses
+  lines.push(
+    typeof uses === 'number'
+      ? { key: 'ticker', label: 'Other tokens with this ticker', value: String(Math.max(0, uses - 1)), mark: uses > 1 ? 'hold' : 'tick' }
+      : { key: 'ticker', label: 'Other tokens with this ticker', value: 'Unknown', mark: 'hold' },
+  )
   const liq = facts.seen_liquidity_usd
   lines.push(
     typeof liq === 'number'

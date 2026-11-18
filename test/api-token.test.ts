@@ -93,6 +93,25 @@ test("each warning fact is a REVIEW with its own reason", async () => {
   }
 });
 
+// 2026-11-17: the real ZOLVA and RUSHR tokens got "This one may be a copy". Age cannot tell the original: the
+// collector missed ZOLVA's first pool, and RUSHR copies were deployed two days before the real launch. The reason
+// must say what we know (the ticker is shared) and how to check, never accuse this token of being the copy.
+test("the OLDEST token with a shared ticker is a REVIEW too: first seen is not proof it is the real one", async () => {
+  // TAURO on 2026-11-18: 5 tokens share the ticker, this one was seen first, and it got ALLOW.
+  const r = await buy(makeApp({ tokenFacts: source({ [TOKEN]: cleanSheet({ ticker_clone_of_older: false, ticker_uses: 5 }) }) }));
+  assert.equal(r.data.decision, "REVIEW");
+  assert.deepEqual(r.data.reasons.map((x: { code: string }) => x.code), ["token_ticker_copy"]);
+  const alone = await buy(makeApp({ tokenFacts: source({ [TOKEN]: cleanSheet({ ticker_clone_of_older: false, ticker_uses: 1 }) }) }));
+  assert.equal(alone.data.decision, "ALLOW", "a ticker nobody else uses stays clean");
+});
+
+test("a shared ticker is a REVIEW that tells you to match the address, without calling this token a copy", async () => {
+  const r = await buy(makeApp({ tokenFacts: source({ [TOKEN]: cleanSheet({ ticker_clone_of_older: true, ticker_uses: 10 }) }) }));
+  const plain: string = r.data.reasons.find((x: { code: string }) => x.code === "token_ticker_copy").plain;
+  assert.doesNotMatch(plain, /copy|older|fake/i);
+  assert.match(plain, /website or X/);
+});
+
 test("a proxy that is also upgradeable is named once, not twice", async () => {
   const r = await buy(makeApp({ tokenFacts: source({ [TOKEN]: cleanSheet({ is_proxy: true, has_upgrade: true }) }) }));
   assert.deepEqual(codes(r), ["token_upgradeable"]);
