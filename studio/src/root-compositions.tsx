@@ -7,9 +7,11 @@ import {KeepMascot, type Pose} from './keep-mascot';
 import {STICKERS, Sticker} from './family-stickers';
 import {PAGE_ART} from './page-art';
 import {OgCard} from './og-card';
+import {PostCard} from './post-card';
 import {XAvatar, XHeader} from './x-profile';
-import {XAvatar3D, XAvatar3DWow} from './x-avatar-3d';
+import {LaunchBanner, XAvatar3D, XAvatar3DWow} from './x-avatar-3d';
 import {RingLand, LAND_FRAMES} from './ring-land';
+import {FPS as WALK_FPS, SiteWalk, WALKS, walkFrames} from './site-walk';
 import {XAvatarSlip, XAvatarVault, XAvatarVerdict, XHeaderSlip, XHeaderVault, XHeaderVerdict} from './x-profile-v3';
 
 const POSES: Pose[] = ['hello', 'allow', 'review', 'block', 'calm'];
@@ -36,6 +38,8 @@ export const RootCompositions: React.FC = () => (
 		{/* launch film hero sprite (rendered to PNG frames by hand) */}
 		<Composition id="RingLand" component={RingLand} durationInFrames={LAND_FRAMES} fps={30} width={720} height={720} />
 		<Still id="XAvatar3D-Wow" component={XAvatar3DWow} width={800} height={800} />
+		<Still id="LaunchBanner" component={LaunchBanner} width={1500} height={500} />
+		<Still id="PostCard" component={PostCard} width={1080} height={1080} defaultProps={{big: '3%', line: 'line', art: 'odds', url: 'reinkeep.xyz/odds'}} />
 		{/* X profile art v3: three directions (rendered by hand: npx remotion still XAvatar-Vault etc.) */}
 		<Still id="XAvatar-Vault" component={XAvatarVault} width={400} height={400} />
 		<Still id="XHeader-Vault" component={XHeaderVault} width={1500} height={500} />
@@ -52,6 +56,10 @@ export const RootCompositions: React.FC = () => (
 		))}
 		{STICKERS.map((name) => (
 			<Still key={name} id={`Sticker-${name}`} component={Sticker} defaultProps={{name}} width={400} height={400} />
+		))}
+		{/* X clips: real screen recordings of reinkeep.xyz framed by a camera (not site assets). */}
+		{Object.entries(WALKS).map(([name, props]) => (
+			<Composition key={name} id={`Walk-${name}`} component={SiteWalk} defaultProps={props} durationInFrames={walkFrames(props)} fps={WALK_FPS} width={1600} height={900} />
 		))}
 	</>
 );
