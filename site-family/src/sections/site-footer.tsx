@@ -47,7 +47,7 @@ export function SiteFooter() {
       <ScrollReveal className="mx-auto flex max-w-[1040px] flex-col items-center px-5 py-20 text-center">
         <SiteSticker name="keep-hello" size={150} />
         <h2 className="mt-4 text-[34px] font-semibold leading-tight sm:text-[44px]">Give your agent rules, not your card.</h2>
-        <p className="mt-3 max-w-[440px] text-[17px] text-ink/65">Reinkeep AI is a pre-trade gate for AI agents on Robinhood Chain. Early access. Reviewed by our team, no outside audit yet.</p>
+        <p className="mt-3 max-w-[440px] text-[17px] text-ink/65">Reinkeep AI is a pre-trade gate for AI agents on Robinhood Chain. Early access. Reviewed by our team.</p>
         <Link to="/gate" className="mt-8 inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-[15px] font-medium text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 active:scale-[0.97]">
           Try the gate
         </Link>
@@ -79,7 +79,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-[1040px] flex-wrap items-center gap-4 border-t border-hair px-5 py-8 text-[14px] text-ink/65">
         <p className="flex items-start gap-2">
           <img src="/logo.webp" alt="" width={20} height={20} className="mt-0.5 rounded-full" />
-          <span>Reinkeep AI · early access, team-reviewed, no outside audit yet · independent project, not affiliated with Robinhood · not financial advice</span>
+          <span>Reinkeep AI · early access, team-reviewed · independent project, not affiliated with Robinhood · not financial advice</span>
         </p>
       </div>
     </footer>
