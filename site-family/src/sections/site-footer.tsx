@@ -4,7 +4,7 @@ import { SiteSticker } from '@/components/site-sticker'
 
 import { GATE } from '@/features/gate-tool/gate-api'
 
-type Item = { label: string; to?: string; href?: string }
+type Item = { label: string; to?: string; href?: string; icon?: string }
 const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: 'Product',
@@ -14,7 +14,6 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { label: 'Board', to: '/board' },
       { label: 'Odds', to: '/odds' },
       { label: 'Radar', to: '/radar' },
-      { label: 'Autopsy', to: '/autopsy' },
       { label: 'Pre-mortem', to: '/premortem' },
       { label: 'Docs', to: '/docs' },
       { label: 'Status', to: '/status' },
@@ -32,9 +31,10 @@ const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: 'Project',
     items: [
-      { label: 'Open data on GitHub', href: 'https://github.com/reinkeep-dev/data' },
-      { label: 'MCP server on GitHub', href: 'https://github.com/reinkeep-dev/mcp' },
-      { label: 'X @reinkeepgate', href: 'https://x.com/reinkeepgate' },
+      { label: 'Source code on GitHub', href: 'https://github.com/reinkeep-dev/app', icon: '/logos/github.svg' },
+      { label: 'Open data on GitHub', href: 'https://github.com/reinkeep-dev/data', icon: '/logos/github.svg' },
+      { label: 'MCP server on GitHub', href: 'https://github.com/reinkeep-dev/mcp', icon: '/logos/github.svg' },
+      { label: '@reinkeepgate', href: 'https://x.com/reinkeepgate', icon: '/logos/x.svg' },
     ],
   },
 ]
@@ -64,7 +64,8 @@ export function SiteFooter() {
                       {it.label}
                     </Link>
                   ) : (
-                    <a href={it.href} target="_blank" rel="noopener" className={linkClass}>
+                    <a href={it.href} target="_blank" rel="noopener" className={it.icon ? `${linkClass} gap-2` : linkClass}>
+                      {it.icon && <img src={it.icon} alt="" width={14} height={14} />}
                       {it.label}
                       <span className="sr-only"> (opens in a new tab)</span>
                     </a>
