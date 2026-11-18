@@ -13,7 +13,6 @@ const FACT_ROWS: [string, string][] = [
   ['has_pause', 'Can pause transfers'],
   ['is_proxy', 'Is a proxy'],
   ['has_upgrade', 'Code can be upgraded'],
-  ['ticker_clone_of_older', 'Copies an older ticker'],
 ]
 const yesNo = (v: unknown) => (v === true ? 'Yes' : v === false ? 'No' : 'Unknown')
 const usd = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) : 'Unknown')
@@ -80,6 +79,7 @@ export function GateResult({ answer, freeLeft }: { answer: GateAnswer; freeLeft:
               {FACT_ROWS.map(([key, label]) => (
                 <Fact key={key} label={label} value={yesNo(facts[key])} />
               ))}
+              <Fact label="Other tokens with this ticker" value={typeof facts.ticker_uses === 'number' ? String(Math.max(0, facts.ticker_uses - 1)) : 'Unknown'} />
               <Fact label="Liquidity seen" value={usd(facts.seen_liquidity_usd)} />
             </dl>
           ) : (

@@ -13,6 +13,7 @@ export type TokenFacts = {
   has_pause: boolean | null
   is_proxy: boolean | null
   has_upgrade: boolean | null
+  ticker_uses?: number | null
   ticker_clone_of_older: boolean | null
   seen_liquidity_usd: number | null
   symbol?: string | null
