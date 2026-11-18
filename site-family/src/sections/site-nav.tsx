@@ -8,11 +8,15 @@ const PAGES = [
   ['Board', '/board'],
   ['Odds', '/odds'],
   ['Radar', '/radar'],
-  ['Autopsy', '/autopsy'],
   ['Pre-mortem', '/premortem'],
   ['Docs', '/docs'],
 ] as const
 const X_URL = 'https://x.com/reinkeepgate'
+const GITHUB_URL = 'https://github.com/reinkeep-dev/app'
+const SOCIAL = [
+  { href: GITHUB_URL, icon: '/logos/github.svg', label: 'Reinkeep source code on GitHub (opens in a new tab)' },
+  { href: X_URL, icon: '/logos/x.svg', label: 'Reinkeep on X (opens in a new tab)' },
+] as const
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   cn('rounded-md outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4', isActive ? 'text-ink underline decoration-2 underline-offset-[10px]' : 'text-ink/70')
@@ -59,9 +63,12 @@ export function SiteNav() {
                 {label}
               </NavLink>
             ))}
-            <a href={X_URL} target="_blank" rel="noopener" className="rounded-md text-ink/70 outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4">
-              X<span className="sr-only"> (opens in a new tab)</span>
-            </a>
+            {SOCIAL.map((s) => (
+              <a key={s.href} href={s.href} target="_blank" rel="noopener" className="inline-flex size-8 items-center justify-center rounded-md opacity-80 outline-none transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4">
+                <img src={s.icon} alt="" width={16} height={16} />
+                <span className="sr-only">{s.label}</span>
+              </a>
+            ))}
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -93,10 +100,13 @@ export function SiteNav() {
                 </NavLink>
               </li>
             ))}
-            <li>
-              <a href={X_URL} target="_blank" rel="noopener" className="flex min-h-12 items-center rounded-md text-[18px] font-medium text-ink/70 outline-none focus-visible:ring-2 focus-visible:ring-ink">
-                X<span className="sr-only"> (opens in a new tab)</span>
-              </a>
+            <li className="flex gap-2">
+              {SOCIAL.map((s) => (
+                <a key={s.href} href={s.href} target="_blank" rel="noopener" className="flex size-12 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ink">
+                  <img src={s.icon} alt="" width={18} height={18} />
+                  <span className="sr-only">{s.label}</span>
+                </a>
+              ))}
             </li>
           </ul>
         </nav>
