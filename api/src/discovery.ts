@@ -15,7 +15,7 @@ export const API = "/api/v1";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const VERSION = "0.1.0";
 const DESCRIPTION =
-  "Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain 4663, USDG). Send the payment request, get ALLOW, REVIEW or BLOCK, the rules that decided it, and a receipt signed with EIP-712. Reviewed by our team, no outside audit yet.";
+  "Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain 4663, USDG). Send the payment request, get ALLOW, REVIEW or BLOCK, the rules that decided it, and a receipt signed with EIP-712. Reviewed by our team.";
 
 type Endpoint = { method: "GET" | "POST" | "DELETE"; path: string; summary: string };
 // Every REST endpoint, path relative to /api/v1. The OpenAPI file and llms.txt are both built from this.
@@ -51,7 +51,7 @@ export function llmsTxt(): string {
   const endpoints = ENDPOINTS.map((e) => `- ${e.method} ${API}${e.path}: ${e.summary}`).join("\n");
   return `# Reinkeep AI
 
-> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide, and the answer is explained in plain words from the rules. Reviewed by our team, no outside audit yet. Do not use it with money you cannot lose.
+> Pre-payment and pre-trade gate for AI agents on Robinhood Chain (chain id 4663, USDG). Before an agent pays, it sends the payment request (and optionally the token it is buying). Reinkeep AI answers ALLOW, REVIEW or BLOCK, names the rules that decided it, and returns a receipt signed with EIP-712 that anyone can re-check. Rules decide, and the answer is explained in plain words from the rules. Reviewed by our team. Do not use it with money you cannot lose.
 
 ## Connect
 - REST API base: ${BASE_URL}${API} (CORS open, no API key)
@@ -162,7 +162,7 @@ A receipt is \`Receipt(string id, string decision, bytes32 policyHash, bytes32 b
 2. Or do it yourself: GET ${API}/receipts/signer, recompute both hashes, recover the signer with recoverTypedDataAddress and compare. Receipts record a moment; they do not expire.
 
 ## Limits
-- Reviewed by our team, no outside audit yet. An answer is rule-based, not a guarantee and not financial advice.
+- Reviewed by our team. An answer is rule-based, not a guarantee and not financial advice.
 - Unknown never passes: a token the collector never saw, or a fact that could not be read, is a REVIEW.
 - Without a \`payer\`, history rules (daily cap, duplicates, rate limit, new recipient) do not run.
 - Token facts cover the tokens the collector saw; liquidity is unknown for a token read live, so that token is a REVIEW at best.
