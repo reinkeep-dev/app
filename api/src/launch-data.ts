@@ -1,7 +1,8 @@
 // What the collector's data says about launches, as four read-only tools:
 //   odds     out of the tokens that started like this (liquidity, or swaps at first sighting), how many still traded a day later
 //   board    per UTC day: pools seen, re-checked after a day, still trading
-//   autopsy  one token: what happened to it in its first day, and which pattern that fits
+//   autopsy  one token's first day. NOT served since 2026-11-18: it called RUSHR, still trading, "liquidity pulled".
+//            Kept here for the roadmap; fix the day-later liquidity read before routing it again.
 //   radar    tickers reused by several tokens lately: which came first, which was busiest
 // "Alive" is the collector's own isAlive() (collect-run.ts), so there is one definition. Every answer carries
 // `coverage`: the collector sees only some launches, and a share is shown only from MIN_SAMPLE judged pools.

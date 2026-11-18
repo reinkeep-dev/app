@@ -188,16 +188,6 @@ const TOOLS: { name: string; description: string; inputSchema: Schema }[] = [
     description: "Tickers reused by 2 or more tokens lately (often a wave of copies), with the earliest and the busiest token for each. Free.",
     inputSchema: { type: "object", properties: { hours: { type: "number", description: "Whole number of hours, 1 to 168 (default 24)" } }, additionalProperties: false },
   },
-  {
-    name: "token_autopsy",
-    description: "What happened to one token a day after launch: still trading, liquidity pulled, faded or never lived, with the numbers when first seen and a day later. Free.",
-    inputSchema: {
-      type: "object",
-      properties: { address: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$", description: "Address of the token contract" } },
-      required: ["address"],
-      additionalProperties: false,
-    },
-  },
 ];
 
 const pct = (v: unknown) => (typeof v === "number" ? `${v}%` : "not enough data");
@@ -439,11 +429,6 @@ async function callTool(name: string, args: Record<string, any>, req: Request, c
       if (r.status !== 200 || !r.data) return apiError(r);
       const lines = (r.data.waves ?? []).map((w: any) => `- ${w.ticker}: ${w.recentTokens} recent tokens (${w.totalTokens} in all), earliest ${w.first?.token ?? "?"}, busiest ${w.busiest?.token ?? "?"}`);
       return toolText(lines.length ? [...lines, r.data.note].join("\n") : "No reused tickers in that window.", r.data);
-    }
-    case "token_autopsy": {
-      const r = await call("GET", `/api/v1/autopsy/${args.address}`);
-      if (r.status !== 200 || !r.data) return apiError(r);
-      return toolText(`${r.data.symbol ?? args.address}: ${r.data.pattern}. ${r.data.plain}`, r.data);
     }
     case "get_pricing":
     case "list_presets":

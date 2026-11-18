@@ -1,4 +1,4 @@
-// The four launch-data reads (api/src/launch-data.ts): odds, board, radar, autopsy. Free, read-only.
+// The launch-data reads (api/src/launch-data.ts): odds, board, radar. Free, read-only.
 import { GATE } from '@/features/gate-tool/gate-api'
 
 export type Coverage = { pools: number; outcomes: number; note: string }
@@ -8,8 +8,6 @@ export type BoardDay = { day: string; pools: number; outcomes: number; alive: nu
 export type Board = { days: BoardDay[]; minSample: number; coverage: Coverage }
 export type Wave = { ticker: string; recentTokens: number; totalTokens: number; first: { token: string; createdAt: string } | null; busiest: { token: string } | null }
 export type Radar = { hours: number; waves: Wave[]; note: string; coverage: Coverage }
-export type Snap = { at: string; liquidityUsd: number | null; volumeH24Usd: number | null; swapsH24: number | null }
-export type Autopsy = { token: string; symbol: string | null; pattern: string; plain: string; firstSeen: Snap; dayLater: (Snap & { ageHours: number }) | null; otherPools: number; note: string }
 
 export type DataFailure = 'not_live' | 'limit' | 'not_found' | 'bad_address' | 'no_data' | 'failed'
 export class DataError extends Error {
@@ -54,4 +52,3 @@ async function read<T>(path: string, signal?: AbortSignal): Promise<T> {
 export const fetchOdds = (signal?: AbortSignal) => read<Odds>('/api/v1/odds', signal)
 export const fetchBoard = (days: number, signal?: AbortSignal) => read<Board>(`/api/v1/board?days=${days}`, signal)
 export const fetchRadar = (hours: number, signal?: AbortSignal) => read<Radar>(`/api/v1/radar?hours=${hours}`, signal)
-export const fetchAutopsy = (address: string, signal?: AbortSignal) => read<Autopsy>(`/api/v1/autopsy/${address}`, signal)

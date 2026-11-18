@@ -33,7 +33,6 @@ npm run typecheck
 | `GET /odds` | Out of the tokens that started like this (first liquidity, first swaps), how many still traded a day later. Share only from 30 judged pools. |
 | `GET /board` | `?days=1..30` per UTC day: pools seen, re-checked, alive, dead, share still trading. |
 | `GET /radar` | `?hours=1..168` tickers reused by 2+ tokens lately, with the earliest and the busiest token. |
-| `GET /autopsy/{address}` | What happened to one token a day after launch: still trading, liquidity pulled, faded, never lived (or too young / not re-checked). |
 | `POST /premortem` | A launch draft returns what the gate will say about it, launch risks with fixes, ticker reuse and how similar launches did after a day. Free, 60 per IP per day, not stored. |
 
 Outside `/api/v1` (not in `openapi.json`; listed in `llms.txt`):
@@ -171,24 +170,15 @@ opinion, only when the rules say REVIEW: `judgement: { ran: true, lean, confiden
   `{ ran: false, why: "unavailable" }`, as does no binding or an 8 s timeout. ALLOW/BLOCK give `why: "only_on_review"`.
 - Not on `/gate/batch`. Uses the Workers AI free allowance (roughly 50 neurons a call, so on the order of 200 a day).
 
-## AI explanation
+## Explanation
 
-Every gate answer carries `explanation: { text, source, model? }`, a note of at most two short sentences for a person
-who is not technical.
+Every gate answer carries `explanation: { text, source }`, a note of at most two short sentences for a person who is not
+technical. It is built only from the decision and the reasons' plain wording, so `source` is always `"rules"`.
 
-- `source: "ai"` with `model: "@cf/meta/llama-3.2-3b-instruct"`: written by Cloudflare Workers AI (free allowance).
-- `source: "rules"` (no `model`): fixed text built from the decision and the reasons' plain wording.
-
-What it is: a readable summary of the answer. What it is not: a judge. The decision, `reasons` and the signed receipt
-come only from the rules engine, the receipt body does not contain the note, and the same request gets the same receipt
-with or without it. The model sees only the decision, the reason codes with their plain text, the payment amount in
-plain units and, if a token was checked, its fact sheet flags.
-
-The AI text is dropped for the rules text when it is empty, over 320 characters, contains a number that is not in those
-facts, or contains advice wording ("should buy", "invest", "guarantee", "safe to" and similar). The same happens on any
-error or when the model takes longer than 2.5 seconds, so a paid call is never held up by it. Without the `ai` binding
-in `wrangler.jsonc` (local dev, tests) the note is always the rules text. Code: `src/explain.ts`; tests:
-`test/api-explain.test.ts`.
+Until 2026-11-18 a small Workers AI model (`@cf/meta/llama-3.2-3b-instruct`) wrote this note. It was switched off because
+it sometimes said things the rules never found (it told a first-time recipient was "used before"), and a filter for
+numbers and advice wording cannot catch that. The model code is still in `src/explain.ts` but `src/worker.ts` no longer
+wires it in. The decision, `reasons` and the signed receipt always came only from the rules engine.
 
 ## Receipt
 

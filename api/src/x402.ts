@@ -11,7 +11,7 @@ export const PRICE_USD = 0.01;
 export const FREE_CALLS_PER_DAY = 25;
 export const VERDICT_CALLS_PER_DAY = 60; // free token checks (GET /api/v1/verdict/{address}) per caller IP per UTC day
 export const PREMORTEM_CALLS_PER_DAY = 60; // free pre-mortems (POST /api/v1/premortem) per caller IP per UTC day
-export const DATA_CALLS_PER_DAY = 300; // free launch-data reads (odds, board, radar, autopsy) per caller IP per UTC day
+export const DATA_CALLS_PER_DAY = 300; // free launch-data reads (odds, board, radar) per caller IP per UTC day
 export const DEFAULT_FACILITATOR = "https://facilitator.priors.trade";
 
 export type Requirements = {
