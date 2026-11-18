@@ -177,6 +177,17 @@ test("verdict: no data at all is REVIEW token_unknown with facts null; a clean t
   assert.equal((await app.send("POST", "/api/v1/verdict/" + PLAIN, {})).status, 405);
 });
 
+test("worker: the explanation is always the rules text, even with an AI binding (the small model made things up)", async () => {
+  // 2026-11-18 live: on new_recipient the model wrote "the recipient address has been used before". Rules text only now.
+  let calls = 0;
+  const s = setup({ env: { AI: { run: async () => { calls++; return { response: "The recipient address has been used before. It is safe." }; } } } });
+  const r = await s.gate();
+  assert.equal(r.status, 200);
+  assert.equal(r.data.explanation.source, "rules");
+  assert.doesNotMatch(r.data.explanation.text, /used before/);
+  assert.equal(calls, 0, "no AI call is made for the explanation");
+});
+
 test("verdict: the AI note is used when it is clean, and the rule text when it is not", async () => {
   const sayings: unknown[] = ["The token has a mint function its owner can still use.", "You should buy this."];
   const key = generatePrivateKey();
