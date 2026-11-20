@@ -4,7 +4,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { TokenFacts } from "../collector/src/token-facts.ts";
-import { defaultPolicy, evaluateToken, foldTicker, USDG_ROBINHOOD } from "../engine/policy.ts";
+import { readFileSync } from "node:fs";
+import { claimsStablecoinName, defaultPolicy, evaluateToken, foldTicker, USDG_ROBINHOOD } from "../engine/policy.ts";
 import { goodRequest, knownPolicy, makeApp } from "./api-fixture.ts";
 
 const USDG = USDG_ROBINHOOD.toLowerCase();
@@ -130,4 +131,29 @@ test("pre-mortem: a draft named after a stablecoin is told the gate will BLOCK i
   assert.equal(r.data.gate.decision, "BLOCK");
   const risk = r.data.risks.find((x: any) => x.code === "token_fake_stablecoin");
   assert.ok(risk && risk.fix.length > 10);
+});
+
+// Every stablecoin-like ticker the collector has actually seen on Robinhood Chain (built from release data-2026-11-20).
+// A ticker that slips through here would have been an ALLOW for a fake stablecoin, as "USD\u{16F0A}" and "U\u0405\u13A0\u03A4" were
+// before the wildcard match.
+const seen = JSON.parse(readFileSync(new URL("./fixtures/stablecoin-tickers.json", import.meta.url), "utf8")) as { fake: string[]; notFake: string[] };
+
+test("every stablecoin-named ticker seen on the chain is caught, and none of the near names is", () => {
+  assert.ok(seen.fake.length >= 11 && seen.notFake.length >= 10);
+  for (const t of seen.fake) {
+    const r = evaluateToken({ token: LOOKALIKE, facts: plainSheet(LOOKALIKE, t) as any }, defaultPolicy.token);
+    assert.deepEqual(r.deny, ["token_fake_stablecoin"], JSON.stringify(t));
+  }
+  for (const t of seen.notFake) assert.equal(claimsStablecoinName(t, defaultPolicy.token.stablecoinSymbols), false, JSON.stringify(t));
+});
+
+test("a letter from any other alphabet counts as a wildcard, but a ticker cannot be mostly wildcards", () => {
+  const S = defaultPolicy.token.stablecoinSymbols;
+  assert.equal(claimsStablecoinName("USD\u{16F0A}", S), true); // Miao letter for T
+  assert.equal(claimsStablecoinName("US\u13A0T", S), true); // Cherokee letter for D
+  assert.equal(claimsStablecoinName("R\u{1D5AB}USD", S), true); // mathematical sans-serif L, folded by NFKC
+  assert.equal(claimsStablecoinName("\u0414\u0416\u041A\u041B", S), false); // four Cyrillic letters: no Latin left to match
+  assert.equal(claimsStablecoinName("\u5E01\u5E01\u5E01\u5E01", S), false);
+  assert.equal(claimsStablecoinName("US\u5E01\u5E01", S), false, "half wildcards is too many");
+  assert.equal(claimsStablecoinName("DOGE", S), false);
 });

@@ -316,7 +316,9 @@ function verdictText(d: any): string {
   const reasons = Array.isArray(d?.reasons) ? d.reasons : [];
   const lines = reasons.map((r: any) => `- ${r.code}${r.plain ? `: ${r.plain}` : ""}`);
   const next =
-    d?.decision === "ALLOW" ? "No token rule objected. That is not a promise that the token is safe."
+    d?.decision === "ALLOW" && d?.issuer
+      ? `The official stablecoin from ${d.issuer}. Its mint, pause and upgrade powers belong to the issuer.`
+    : d?.decision === "ALLOW" ? "No token rule objected. That is not a promise that the token is safe."
     : d?.decision === "REVIEW" ? "A human should look at this token before anyone buys it."
     : "Do not buy this token.";
   return [`${d?.decision ?? "UNKNOWN"} (token ${d?.token ?? "?"})`, ...(lines.length ? lines : ["- no rule fired"]), next].join("\n");

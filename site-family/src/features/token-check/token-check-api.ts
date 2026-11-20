@@ -25,6 +25,7 @@ export type Verdict = {
   reasons: { code: string; plain: string }[]
   facts: TokenFacts
   explanation: { text: string; source: 'ai' | 'rules'; model?: string }
+  issuer?: string // set for a known issuer's stablecoin (USDG from Paxos, RLUSD from Ripple)
   checkedAt: string | number
 }
 

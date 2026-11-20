@@ -24,7 +24,18 @@ const FACTS: { key: keyof TokenFacts; label: string; good: boolean; hard: boolea
   { key: 'has_upgrade', label: 'Code can be upgraded', good: false, hard: false },
 ]
 
-function toLines(facts: TokenFacts): Line[] {
+function toLines(facts: TokenFacts, issuer?: string): Line[] {
+  // A known issuer's stablecoin: its powers are the issuer's by design, so they are named, not marked as a danger.
+  if (issuer) {
+    return [
+      { key: 'issuer', label: 'Official stablecoin from', value: issuer, mark: 'tick' },
+      ...FACTS.map<Line>(({ key, label }) => {
+        const v = facts[key] as boolean | null | undefined
+        if (key === 'is_contract') return { key, label, value: v ? 'Yes' : v === false ? 'No' : 'Unknown', mark: v ? 'tick' : v === false ? 'cross' : 'hold' }
+        return { key, label, value: v ? `Yes, ${issuer} only` : v === false ? 'No' : 'Unknown', mark: 'tick' }
+      }),
+    ]
+  }
   const lines = FACTS.map<Line>(({ key, label, good, hard }) => {
     const v = facts[key] as boolean | null | undefined
     if (v === null || v === undefined) return { key, label, value: 'Unknown', mark: 'hold' }
@@ -59,7 +70,7 @@ function MarkIcon({ mark }: { mark: Mark }) {
 export function TokenCheckScanner({ address, loading, verdict }: { address: string; loading: boolean; verdict: Verdict | null }) {
   const reduce = useReducedMotion()
   const shown = verdict?.token ?? address
-  const lines = verdict ? toLines(verdict.facts) : []
+  const lines = verdict ? toLines(verdict.facts, verdict.issuer) : []
   const step = reduce ? 0 : 0.14
   const stampDelay = reduce ? 0 : 0.25 + lines.length * step
 
