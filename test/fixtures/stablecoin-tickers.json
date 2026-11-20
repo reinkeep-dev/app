@@ -1,0 +1,30 @@
+{
+  "note": "Every ticker on Robinhood Chain that the collector saw by 2026-11-20 (12,091 tokens, release data-2026-11-20) and that names a stablecoin, or looks close to one. 'fake' must stay a BLOCK token_fake_stablecoin; 'notFake' must not. Built from real data, not invented.",
+  "fake": [
+    "RLUSD",
+    "USD0",
+    "USDB",
+    "USDC",
+    "USDG",
+    "USDT",
+    "USD𖼊",
+    "US⁩DT",
+    "UЅDT",
+    "UЅᎠΤ",
+    "ՍЅDT"
+  ],
+  "notFake": [
+    "BREDAI",
+    "DAIOS",
+    "DAISY",
+    "NEURIIO",
+    "NEUROSTERI",
+    "RUSD",
+    "STABLE",
+    "SUSD",
+    "UDOG COIN USDG",
+    "UDOGCOINUSDG",
+    "ZLUSD",
+    "sTABLE"
+  ]
+}

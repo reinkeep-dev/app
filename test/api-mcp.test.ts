@@ -301,3 +301,14 @@ test("launch-data tools call the right GET paths, default the window, and pass A
   await call(f, tool(4, "ticker_radar", { hours: 48 }));
   assert.deepEqual(urls, ["/api/v1/odds", "/api/v1/board?days=7", "/api/v1/board?days=7", "/api/v1/radar?hours=48"]);
 });
+
+test("check_token on a known issuer's stablecoin names the issuer instead of the generic ALLOW line", async () => {
+  const USDG = "0x5fc5360d0400a0fd4f2af552add042d716f1d168";
+  const f = fake(() => j(200, { token: USDG, decision: "ALLOW", reasons: [], issuer: "Paxos", facts: {}, explanation: { text: "x", source: "rules" } }));
+  const r = await call(f, tool(1, "check_token", { address: USDG }));
+  const text = r.data.result.content[0].text;
+  assert.match(text, /official stablecoin from Paxos/);
+  assert.doesNotMatch(text, /No token rule objected/);
+  const plain = fake(() => j(200, { token: USDG, decision: "ALLOW", reasons: [], facts: {}, explanation: { text: "x", source: "rules" } }));
+  assert.match((await call(plain, tool(2, "check_token", { address: USDG }))).data.result.content[0].text, /No token rule objected/);
+});

@@ -123,6 +123,18 @@ export function foldTicker(raw: string): string {
     .toUpperCase()
     .replace(/[^\p{L}\p{N}]/gu, "");
 }
+
+// Does this ticker claim to be one of these stablecoin names? The look-alike table above can never list every letter
+// a copycat may borrow (2026-11-20: "USD𖼊" used a Miao letter for T), so after folding, any letter or digit outside
+// A-Z and 0-9 counts as "could be any letter". It matches a name of the same length when at most a third of the
+// characters are such wildcards and the rest match exactly: "USD𖼊" reads as "USD?" and matches USDT.
+export function claimsStablecoinName(raw: string, symbols: readonly string[]): boolean {
+  const t = [...foldTicker(raw)];
+  const wild = t.filter((ch) => !/[A-Z0-9]/.test(ch)).length;
+  if (wild === 0) return symbols.includes(t.join(""));
+  if (wild * 3 > t.length) return false;
+  return symbols.some((s) => s.length === t.length && t.every((ch, i) => !/[A-Z0-9]/.test(ch) || ch === s[i]));
+}
 const micro = (usd: number) => BigInt(Math.round(usd * 1e6));
 
 // The token rules alone ("what it buys"): which BLOCK and which REVIEW reasons a token's fact sheet gives.
@@ -139,7 +151,7 @@ export function evaluateToken(buying: TokenUnderTest, tokenPolicy: TokenPolicy):
     return { deny, approve, issuer: known.issuer };
   }
   // Wearing a stablecoin's name without being on the issuer list: a fake, whatever else its contract says.
-  if (f?.ticker && (tokenPolicy.stablecoinSymbols ?? []).includes(foldTicker(f.ticker))) deny.push("token_fake_stablecoin");
+  if (f?.ticker && claimsStablecoinName(f.ticker, tokenPolicy.stablecoinSymbols ?? [])) deny.push("token_fake_stablecoin");
   if (f === null) {
     approve.push("token_unknown");
   } else {
