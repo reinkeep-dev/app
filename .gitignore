@@ -8,7 +8,6 @@ collector/data/
 *.pem
 
 # Not code: kept on the owner's machine only, never in the public repo
-CLAUDE.md
 ROADMAP.md
 brand-x/
 clips-film/

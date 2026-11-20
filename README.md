@@ -37,7 +37,7 @@ Every endpoint, request field and token rule is listed in [`api/README.md`](api/
 | `collector/` | Token data collector. It runs from GitHub Actions in [reinkeep-dev/data](https://github.com/reinkeep-dev/data) |
 | `test/` | Tests for the API, token rules and collector |
 
-A local MCP server package lives in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp).
+The local guard (CLI, MCP over stdio and a signer wrapper, no network needed) and the hosted MCP guide live in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp).
 
 ## Develop
 
@@ -62,3 +62,10 @@ To cut a release:
 3. After it lands on `main`, tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`
 
 `main` cannot be force-pushed or deleted.
+
+## License
+
+Business Source License 1.1 (see [`LICENSE`](LICENSE)). You can read, change and run this code, including in production,
+as long as you do not offer it as a competing payment or pre-trade gate for AI agents. On 2028-11-20 it becomes MIT.
+The engine (`engine/`) and the collector (`collector/`) are also MIT in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp)
+and [reinkeep-dev/data](https://github.com/reinkeep-dev/data).
