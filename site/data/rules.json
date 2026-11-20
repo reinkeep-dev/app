@@ -18,6 +18,7 @@
   { "kind": "deny", "side": "buys", "code": "token_not_contract", "plain": "The token address has no contract code. There is nothing real to buy." },
   { "kind": "deny", "side": "buys", "code": "token_mint_live_owner", "plain": "The token can mint new supply and still has an owner who can do it." },
   { "kind": "deny", "side": "buys", "code": "token_has_blacklist", "plain": "The token can blacklist holders, so your tokens could be frozen." },
+  { "kind": "deny", "side": "buys", "code": "token_fake_stablecoin", "plain": "Uses the name of a stablecoin like USDC, USDT or USDG, but it is not the issuer's official address. A fake." },
   { "kind": "wait", "side": "buys", "code": "token_unknown", "plain": "We have no facts on this token yet. Unknown is not safe, so a human decides." },
   { "kind": "wait", "side": "buys", "code": "token_facts_unknown", "plain": "Some facts a blocking rule needs could not be read, so a human decides." },
   { "kind": "wait", "side": "buys", "code": "token_has_pause", "plain": "The token has a pause switch: trading can be stopped." },

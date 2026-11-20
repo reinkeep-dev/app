@@ -15,6 +15,7 @@ export type Verdict = {
   reasons: Reason[];
   facts: unknown | null; // the fact sheet the rules read; null when we have no data on the token
   explanation: Explanation;
+  issuer?: string; // set when the token is a known issuer's stablecoin (engine defaultPolicy.token.knownIssuers)
   checkedAt: string;
 };
 
@@ -22,9 +23,16 @@ export async function verdict(address: string, deps: Pick<GateDeps, "now" | "tok
   if (!ADDRESS.test(address)) throw new ApiError(400, "invalid_address", "The token must be a 0x address with 40 hex characters.");
   const token = address.toLowerCase();
   const buying = await readFacts(token, deps);
-  const { deny, approve } = evaluateToken(buying, defaultPolicy.token);
+  const { deny, approve, issuer } = evaluateToken(buying, defaultPolicy.token);
   const decision: Decision = deny.length ? "BLOCK" : approve.length ? "REVIEW" : "ALLOW";
   const reasons = (deny.length ? deny : approve).map(explain);
-  const explanation = await explainSafely({ decision, reasons, token: buying, kind: "token_check" }, deps);
-  return { token, decision, reasons, facts: buying.facts, explanation, checkedAt: new Date(deps.now()).toISOString() };
+  // A known issuer's ALLOW gets a fixed sentence: the facts still show mint and upgrade powers, and a model asked to
+  // explain an ALLOW next to those facts would have to guess why they did not count.
+  const explanation =
+    issuer !== undefined && decision === "ALLOW"
+      ? { text: `Allowed. This is the official stablecoin from ${issuer}. Its mint, pause and upgrade powers belong to the issuer, as with any regulated stablecoin.`, source: "rules" as const }
+      : await explainSafely({ decision, reasons, token: buying, kind: "token_check" }, deps);
+  const out: Verdict = { token, decision, reasons, facts: buying.facts, explanation, checkedAt: new Date(deps.now()).toISOString() };
+  if (issuer !== undefined) out.issuer = issuer;
+  return out;
 }

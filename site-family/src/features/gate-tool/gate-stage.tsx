@@ -31,7 +31,7 @@ const GROUP: Record<string, string> = {
 }
 const money = (v: number) => (Number.isFinite(v) ? `$${v < 0.01 && v > 0 ? v : v.toFixed(2)}` : '—')
 const groupOf = (code: string) => GROUP[code] ?? (code.startsWith('token_') ? 'token' : 'amount')
-const DENY = new Set(['over_payment_cap', 'invalid_amount', 'over_daily_cap', 'over_host_cap', 'resource_not_https', 'resource_invalid', 'host_not_allowed', 'validity_too_long', 'duplicate_payment', 'rate_limit', 'token_not_contract', 'token_mint_live_owner', 'token_has_blacklist', 'network_not_allowed', 'asset_not_allowed', 'unsupported_decimals', 'amount_changed'])
+const DENY = new Set(['over_payment_cap', 'invalid_amount', 'over_daily_cap', 'over_host_cap', 'resource_not_https', 'resource_invalid', 'host_not_allowed', 'validity_too_long', 'duplicate_payment', 'rate_limit', 'token_not_contract', 'token_mint_live_owner', 'token_has_blacklist', 'token_fake_stablecoin', 'network_not_allowed', 'asset_not_allowed', 'unsupported_decimals', 'amount_changed'])
 
 function preview(input: StageInput): { decision: Decision; codes: string[] } | null {
   const amount = toBaseUnits(input.amount)

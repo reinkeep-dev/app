@@ -31,6 +31,7 @@ export type TokenFactSheet = {
   seen_liquidity_usd: number | null;
   ticker_uses: number | null; // how many different tokens carry this ticker, this one included
   ticker_clone_of_older: boolean | null;
+  ticker?: string | null; // the collector's normalized ticker; read only by the fake-stablecoin rule
 };
 
 // The token being bought with this payment. facts is null when the collector has never seen the token
@@ -41,6 +42,14 @@ export type TokenPolicy = {
   // Liquidity when the collector first saw the token. $1,000 is a starting value, not fitted to outcomes yet:
   // on the first day of data (2026-11-10, 39 tokens) a quarter had under $2 and the median was $3,487.
   reviewBelowLiquidityUsd: number;
+  // Stablecoins from a known, regulated issuer, by lowercase address. Their mint, pause, blacklist and upgrade powers
+  // belong to the issuer by design, and the address itself is the official one, so only "is it a contract" is checked
+  // for them. Add an address here only from the issuer's own published list, with that list's URL beside it.
+  knownIssuers: Record<string, { issuer: string; symbol: string }>;
+  // Stablecoin symbols nobody else may use. A token carrying one of them (after look-alike letters are folded) that is
+  // not in knownIssuers is a fake stablecoin and a BLOCK. Includes coins not issued on this chain at all: any token
+  // there claiming that name is not the real one.
+  stablecoinSymbols: string[];
 };
 
 export type Policy = {
@@ -76,18 +85,61 @@ export const defaultPolicy: Policy = {
   maxValiditySec: 120,
   duplicateWindowSec: 30,
   maxPerMinute: 10,
-  token: { reviewBelowLiquidityUsd: 1000 },
+  token: {
+    reviewBelowLiquidityUsd: 1000,
+    knownIssuers: {
+      // Checked 20 Nov 2026 on the issuer's own page and on-chain (symbol and decimals read from the contract).
+      // USDG: https://docs.paxos.com/guides/stablecoin/usdg/mainnet.md (also https://docs.robinhood.com/chain/contracts)
+      [USDG_ROBINHOOD.toLowerCase()]: { issuer: "Paxos", symbol: "USDG" },
+      // RLUSD: https://docs.ripple.com/products/stablecoin/overview/token-addresses.md (18 decimals)
+      "0x8d58c0c60b8d6b88fa98b291a646db34d0f98258": { issuer: "Ripple", symbol: "RLUSD" },
+      // Not issued on Robinhood Chain as of 20 Nov 2026 (absent from the issuers' own lists): USDC and EURC (Circle),
+      // USDT and USDT0, PYUSD and USDP (Paxos), USDe. Any token there using those names is a fake.
+    },
+    // Major fiat-backed and on-chain dollar and euro stablecoins by market size (2026).
+    stablecoinSymbols: [
+      "USDG", "USDC", "USDT", "USDT0", "PYUSD", "USDP", "RLUSD", "FDUSD", "TUSD", "GUSD", "USD1", "EURC", "EURT",
+      "DAI", "USDS", "USDE", "USD0", "FRAX", "LUSD", "GHO", "CRVUSD", "USDB",
+    ],
+  },
 };
 
 const lc = (s: string) => s.toLowerCase();
+
+// Look-alike letters from other scripts that copycat tickers use in place of Latin ones (seen on Robinhood Chain,
+// 2026-11-20: "UЅDT" with a Cyrillic S, "ՍЅDT" with an Armenian U). Folding them lets "UЅDT" match "USDT".
+const LOOKALIKE: Record<string, string> = {
+  А: "A", В: "B", С: "C", Е: "E", Н: "H", І: "I", Ј: "J", К: "K", М: "M", О: "O", Р: "P", Ѕ: "S", Т: "T", Х: "X", У: "Y", Ү: "Y",
+  а: "A", в: "B", с: "C", е: "E", н: "H", і: "I", ј: "J", к: "K", м: "M", о: "O", р: "P", ѕ: "S", т: "T", х: "X", у: "Y",
+  Α: "A", Β: "B", Ε: "E", Ζ: "Z", Η: "H", Ι: "I", Κ: "K", Μ: "M", Ν: "N", Ο: "O", Ρ: "P", Τ: "T", Υ: "Y", Χ: "X",
+  ο: "O", ρ: "P", υ: "U", ν: "V", Ս: "U", Օ: "O", ս: "U", օ: "O",
+};
+
+// A ticker as letters and digits only, upper case, with look-alike letters folded to Latin.
+export function foldTicker(raw: string): string {
+  return [...raw.normalize("NFKC")]
+    .map((ch) => LOOKALIKE[ch] ?? ch)
+    .join("")
+    .toUpperCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
 const micro = (usd: number) => BigInt(Math.round(usd * 1e6));
 
 // The token rules alone ("what it buys"): which BLOCK and which REVIEW reasons a token's fact sheet gives.
 // evaluate() runs exactly this; the free token check (GET /api/v1/verdict/{address}) runs it without any payment.
-export function evaluateToken(buying: TokenUnderTest, tokenPolicy: TokenPolicy): { deny: string[]; approve: string[] } {
+export function evaluateToken(buying: TokenUnderTest, tokenPolicy: TokenPolicy): { deny: string[]; approve: string[]; issuer?: string } {
   const deny: string[] = [];
   const approve: string[] = [];
   const f = buying.facts;
+  const known = tokenPolicy.knownIssuers?.[buying.token.toLowerCase()];
+  if (known !== undefined) {
+    // A known issuer's stablecoin: its powers are expected, but the address must still hold a contract.
+    if (f === null || f.is_contract === null) approve.push("token_facts_unknown");
+    else if (f.is_contract === false) deny.push("token_not_contract");
+    return { deny, approve, issuer: known.issuer };
+  }
+  // Wearing a stablecoin's name without being on the issuer list: a fake, whatever else its contract says.
+  if (f?.ticker && (tokenPolicy.stablecoinSymbols ?? []).includes(foldTicker(f.ticker))) deny.push("token_fake_stablecoin");
   if (f === null) {
     approve.push("token_unknown");
   } else {

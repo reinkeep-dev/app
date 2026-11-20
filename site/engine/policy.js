@@ -29,7 +29,9 @@ export const USDG_ROBINHOOD = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
                               
                                        
                                     
+                                                                                               
                                         
+                                                                                                     
   
 
 // The token being bought with this payment. facts is null when the collector has never seen the token
@@ -40,6 +42,14 @@ export const USDG_ROBINHOOD = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
                                                                                                               
                                                                                                        
                                   
+                                                                                                                      
+                                                                                                                      
+                                                                                                             
+                                                                   
+                                                                                                                       
+                                                                                                                    
+                                                  
+                              
   
 
                       
@@ -75,11 +85,80 @@ export const defaultPolicy         = {
   maxValiditySec: 120,
   duplicateWindowSec: 30,
   maxPerMinute: 10,
-  token: { reviewBelowLiquidityUsd: 1000 },
+  token: {
+    reviewBelowLiquidityUsd: 1000,
+    knownIssuers: {
+      // Checked 20 Nov 2026 on the issuer's own page and on-chain (symbol and decimals read from the contract).
+      // USDG: https://docs.paxos.com/guides/stablecoin/usdg/mainnet.md (also https://docs.robinhood.com/chain/contracts)
+      [USDG_ROBINHOOD.toLowerCase()]: { issuer: "Paxos", symbol: "USDG" },
+      // RLUSD: https://docs.ripple.com/products/stablecoin/overview/token-addresses.md (18 decimals)
+      "0x8d58c0c60b8d6b88fa98b291a646db34d0f98258": { issuer: "Ripple", symbol: "RLUSD" },
+      // Not issued on Robinhood Chain as of 20 Nov 2026 (absent from the issuers' own lists): USDC and EURC (Circle),
+      // USDT and USDT0, PYUSD and USDP (Paxos), USDe. Any token there using those names is a fake.
+    },
+    // Major fiat-backed and on-chain dollar and euro stablecoins by market size (2026).
+    stablecoinSymbols: [
+      "USDG", "USDC", "USDT", "USDT0", "PYUSD", "USDP", "RLUSD", "FDUSD", "TUSD", "GUSD", "USD1", "EURC", "EURT",
+      "DAI", "USDS", "USDE", "USD0", "FRAX", "LUSD", "GHO", "CRVUSD", "USDB",
+    ],
+  },
 };
 
 const lc = (s        ) => s.toLowerCase();
+
+// Look-alike letters from other scripts that copycat tickers use in place of Latin ones (seen on Robinhood Chain,
+// 2026-11-20: "UЅDT" with a Cyrillic S, "ՍЅDT" with an Armenian U). Folding them lets "UЅDT" match "USDT".
+const LOOKALIKE                         = {
+  А: "A", В: "B", С: "C", Е: "E", Н: "H", І: "I", Ј: "J", К: "K", М: "M", О: "O", Р: "P", Ѕ: "S", Т: "T", Х: "X", У: "Y", Ү: "Y",
+  а: "A", в: "B", с: "C", е: "E", н: "H", і: "I", ј: "J", к: "K", м: "M", о: "O", р: "P", ѕ: "S", т: "T", х: "X", у: "Y",
+  Α: "A", Β: "B", Ε: "E", Ζ: "Z", Η: "H", Ι: "I", Κ: "K", Μ: "M", Ν: "N", Ο: "O", Ρ: "P", Τ: "T", Υ: "Y", Χ: "X",
+  ο: "O", ρ: "P", υ: "U", ν: "V", Ս: "U", Օ: "O", ս: "U", օ: "O",
+};
+
+// A ticker as letters and digits only, upper case, with look-alike letters folded to Latin.
+export function foldTicker(raw        )         {
+  return [...raw.normalize("NFKC")]
+    .map((ch) => LOOKALIKE[ch] ?? ch)
+    .join("")
+    .toUpperCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
 const micro = (usd        ) => BigInt(Math.round(usd * 1e6));
+
+// The token rules alone ("what it buys"): which BLOCK and which REVIEW reasons a token's fact sheet gives.
+// evaluate() runs exactly this; the free token check (GET /api/v1/verdict/{address}) runs it without any payment.
+export function evaluateToken(buying                , tokenPolicy             )                                                         {
+  const deny           = [];
+  const approve           = [];
+  const f = buying.facts;
+  const known = tokenPolicy.knownIssuers?.[buying.token.toLowerCase()];
+  if (known !== undefined) {
+    // A known issuer's stablecoin: its powers are expected, but the address must still hold a contract.
+    if (f === null || f.is_contract === null) approve.push("token_facts_unknown");
+    else if (f.is_contract === false) deny.push("token_not_contract");
+    return { deny, approve, issuer: known.issuer };
+  }
+  // Wearing a stablecoin's name without being on the issuer list: a fake, whatever else its contract says.
+  if (f?.ticker && (tokenPolicy.stablecoinSymbols ?? []).includes(foldTicker(f.ticker))) deny.push("token_fake_stablecoin");
+  if (f === null) {
+    approve.push("token_unknown");
+  } else {
+    // A BLOCK needs the fact to be known TRUE. If a fact a BLOCK rule reads is unknown, that is a REVIEW.
+    if (f.is_contract === false) deny.push("token_not_contract");
+    if (f.mint_with_live_owner === true) deny.push("token_mint_live_owner");
+    if (f.has_blacklist === true) deny.push("token_has_blacklist");
+    if (f.is_contract === null || f.mint_with_live_owner === null || f.has_blacklist === null || f.seen_liquidity_usd === null) {
+      approve.push("token_facts_unknown");
+    }
+    if (f.has_pause === true) approve.push("token_has_pause");
+    if (f.is_proxy === true || f.has_upgrade === true) approve.push("token_upgradeable");
+    // Any shared ticker is a REVIEW, the oldest token included: "first seen" is not "the real one" (a copy can be
+    // deployed before the launch, as with RUSHR). Which address is official needs a list, not the clock.
+    if ((f.ticker_uses ?? 0) >= 2 || f.ticker_clone_of_older === true) approve.push("token_ticker_copy");
+    if (f.seen_liquidity_usd !== null && f.seen_liquidity_usd < tokenPolicy.reviewBelowLiquidityUsd) approve.push("token_low_liquidity");
+  }
+  return { deny, approve };
+}
 
 // How it pays (the spend rules) and, when `buying` is given, what it buys (the token rules), in ONE answer:
 // any BLOCK reason wins over any REVIEW reason, whichever side it came from.
@@ -124,22 +203,9 @@ export function evaluate(req                , policy        , ledger            
   if (!policy.allowPayTo.map(lc).includes(payTo) && !ledger.some((e) => e.payTo === payTo)) approve.push("new_recipient");
 
   if (buying) {
-    const f = buying.facts;
-    if (f === null) {
-      approve.push("token_unknown");
-    } else {
-      // A BLOCK needs the fact to be known TRUE. If a fact a BLOCK rule reads is unknown, that is a REVIEW.
-      if (f.is_contract === false) deny.push("token_not_contract");
-      if (f.mint_with_live_owner === true) deny.push("token_mint_live_owner");
-      if (f.has_blacklist === true) deny.push("token_has_blacklist");
-      if (f.is_contract === null || f.mint_with_live_owner === null || f.has_blacklist === null || f.seen_liquidity_usd === null) {
-        approve.push("token_facts_unknown");
-      }
-      if (f.has_pause === true) approve.push("token_has_pause");
-      if (f.is_proxy === true || f.has_upgrade === true) approve.push("token_upgradeable");
-      if (f.ticker_clone_of_older === true) approve.push("token_ticker_copy");
-      if (f.seen_liquidity_usd !== null && f.seen_liquidity_usd < policy.token.reviewBelowLiquidityUsd) approve.push("token_low_liquidity");
-    }
+    const t = evaluateToken(buying, policy.token);
+    deny.push(...t.deny);
+    approve.push(...t.approve);
   }
 
   if (deny.length) return { verdict: "deny", reasons: deny };

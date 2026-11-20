@@ -1,6 +1,6 @@
 [
   { "state": "live", "title": "Spend rules", "text": "16 rules for caps, recipients, price changes, replays and wrong chains. Tested." },
-  { "state": "live", "title": "Token rules, in the same answer", "text": "9 rules on the token being bought: mint with a live owner, blacklist, pause, upgradeable proxy, ticker copies, low liquidity. Tested; live on the hosted gate, unknown tokens read straight from the chain." },
+  { "state": "live", "title": "Token rules, in the same answer", "text": "10 rules on the token being bought: mint with a live owner, blacklist, pause, upgradeable proxy, fake stablecoins, ticker copies, low liquidity. Tested; live on the hosted gate, unknown tokens read straight from the chain." },
   { "state": "live", "title": "Hash-chained audit log", "text": "Every decision is recorded. Editing an old line breaks the chain and is caught." },
   { "state": "live", "title": "CLI, MCP server and signer wrapper", "text": "Run from source today. Only the signer wrapper enforces; MCP advises." },
   { "state": "live", "title": "Hosted gate with a free daily allowance", "text": "api.reinkeep.xyz: 25 free checks a day per caller, with per-payer history for caps, duplicates and rate limits." },
