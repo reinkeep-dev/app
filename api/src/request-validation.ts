@@ -115,7 +115,8 @@ function parsePolicy(v: unknown): { policy: Policy; name: string } {
   if (v.maxPerMinute !== undefined) p.maxPerMinute = num(v.maxPerMinute, "policy.maxPerMinute", 1, 1000, true);
   if (v.token !== undefined) {
     if (!isObject(v.token)) return bad("invalid_field", "policy.token must be an object.");
-    onlyKeys(v.token, Object.keys(defaultPolicy.token), "policy.token", "unknown_policy_field");
+    onlyKeys(v.token, ["reviewBelowLiquidityUsd"], "policy.token", "unknown_policy_field");
+    // knownIssuers is not settable from a request: an agent must not be able to name its own token "official".
     p.token = { ...defaultPolicy.token };
     if (v.token.reviewBelowLiquidityUsd !== undefined) {
       p.token.reviewBelowLiquidityUsd = num(v.token.reviewBelowLiquidityUsd, "policy.token.reviewBelowLiquidityUsd", 0, 1_000_000_000);

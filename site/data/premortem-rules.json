@@ -16,6 +16,7 @@
     "token_has_pause": "Remove the pause switch, or renounce the owner who can use it.",
     "token_upgradeable": "Deploy a plain, non-upgradeable contract.",
     "token_ticker_copy": "Pick a ticker no earlier token uses.",
+    "token_fake_stablecoin": "Do not name the token after a stablecoin. Agents using Reinkeep will not buy it.",
     "token_low_liquidity": "Start with at least $1,000 of liquidity.",
     "token_facts_unknown": "State every field of the draft so nothing is left unknown."
   }

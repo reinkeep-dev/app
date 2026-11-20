@@ -88,6 +88,7 @@ export function draftSheet(d: Draft, tickerTaken: boolean | null): TokenFactShee
     seen_liquidity_usd: d.liquidityUsd,
     ticker_uses: tickerTaken === null ? null : tickerTaken ? 2 : 1,
     ticker_clone_of_older: tickerTaken,
+    ticker: d.ticker,
   };
 }
 

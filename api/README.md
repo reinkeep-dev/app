@@ -21,7 +21,7 @@ npm run typecheck
 | `GET /gate/pricing` | `{ freeCallsPerDay, priceUsd, amount, asset, network, payTo, facilitator, holder }` (`payTo` is null if unset; `holder` is null until the token launches). |
 | `GET /gate/presets` | Built-in policies (`reinkeep-default-v1`). |
 | `POST /gate/batch` | `{ request, policy?, tokens: [address, ...max 10] }` returns `{ results: [gate answer per token] }`, one signed receipt each. |
-| `GET /verdict/{address}` | Free token check, token rules only: `{ token, decision, reasons[], facts, explanation, checkedAt }`. Not signed. |
+| `GET /verdict/{address}` | Free token check, token rules only: `{ token, decision, reasons[], facts, explanation, checkedAt, issuer? }`. Not signed. |
 | `GET /receipts/{id}` | A stored receipt with a fresh signature check: `{ receipt, valid, signer }` (`reason` when not valid). `404` if unknown. |
 | `POST /mandates` | `{ token, webhookUrl? }` starts a 7-day watch: the contract is re-read every 30 min. Returns `{ mandate, webhookSecret, event }` (the secret is shown only here). Costs 5 calls. |
 | `GET /mandates/{id}` | The mandate: state, expiry, checks so far, latest signed signal. |
@@ -63,6 +63,7 @@ Facts come from the collector's database (`collector/`, fact sheet built by `bui
 | `token_not_contract` | BLOCK | no contract code at the address |
 | `token_mint_live_owner` | BLOCK | a mint function and an owner who can still use it |
 | `token_has_blacklist` | BLOCK | a blacklist function |
+| `token_fake_stablecoin` | BLOCK | uses a stablecoin name (USDC, USDT, USDG, RLUSD...) but is not on the issuer list |
 | `token_unknown` | REVIEW | the collector never saw the token, or the facts could not be read |
 | `token_facts_unknown` | REVIEW | a fact a BLOCK rule needs is unknown (null), or liquidity is unknown |
 | `token_has_pause` | REVIEW | a pause function |
@@ -82,6 +83,12 @@ a `BLOCK` with a named reason, for example a wrong chain, a wrong token or a pla
 `GET /api/v1/verdict/{address}` answers "is this token worth a look?" with no payment and no receipt. It reads the facts
 the same way the gate does (the collector's D1 data, else the contract live from `RPC_URL`) and runs ONLY the token
 rules (`evaluateToken()` in `engine/policy.ts`, the same code `evaluate()` calls for "what it buys", default policy).
+
+Stablecoins from a known issuer (`defaultPolicy.token.knownIssuers`: USDG from Paxos and RLUSD from Ripple, addresses
+taken from each issuer's own list) are checked only for having a contract: their mint, pause and upgrade powers belong
+to the issuer. The answer then carries `issuer` (for example `"Paxos"`). Any other token using a stablecoin's name
+(USDC, USDT, USDG, RLUSD and more, look-alike letters from other alphabets included) is BLOCK `token_fake_stablecoin`.
+A request's `policy.token` cannot add known issuers.
 
 ```json
 { "token": "0x…lowercase", "decision": "REVIEW",

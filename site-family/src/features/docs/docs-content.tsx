@@ -10,7 +10,7 @@ export const SECTIONS = [
   ['quick-start', 'Quick start'],
   ['endpoints', 'Endpoints'],
   ['request', 'Request fields'],
-  ['rules', 'The 25 rules'],
+  ['rules', `The ${rules.length} rules`],
   ['paying', 'Paying'],
   ['receipts', 'Receipts'],
   ['mcp', 'MCP setup'],
