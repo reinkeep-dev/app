@@ -65,4 +65,7 @@ To cut a release:
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+Business Source License 1.1 (see [`LICENSE`](LICENSE)). You can read, change and run this code, including in production,
+as long as you do not offer it as a competing payment or pre-trade gate for AI agents. On 2028-11-20 it becomes MIT.
+The engine (`engine/`) and the collector (`collector/`) are also MIT in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp)
+and [reinkeep-dev/data](https://github.com/reinkeep-dev/data).
