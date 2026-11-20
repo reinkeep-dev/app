@@ -62,3 +62,7 @@ To cut a release:
 3. After it lands on `main`, tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`
 
 `main` cannot be force-pushed or deleted.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
