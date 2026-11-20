@@ -37,7 +37,7 @@ Every endpoint, request field and token rule is listed in [`api/README.md`](api/
 | `collector/` | Token data collector. It runs from GitHub Actions in [reinkeep-dev/data](https://github.com/reinkeep-dev/data) |
 | `test/` | Tests for the API, token rules and collector |
 
-A local MCP server package lives in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp).
+The local guard (CLI, MCP over stdio and a signer wrapper, no network needed) and the hosted MCP guide live in [reinkeep-dev/mcp](https://github.com/reinkeep-dev/mcp).
 
 ## Develop
 
